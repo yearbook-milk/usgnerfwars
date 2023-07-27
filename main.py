@@ -3,6 +3,7 @@ import cv2
 import numpy                         as np
 import sys
 import os
+import pickle
 
 sys.path.append(os.path.abspath("computervision"))
 sys.path.append(os.path.abspath("hsi"))
@@ -98,6 +99,7 @@ rescan_on_lockbreak = True
 failed_tracks = 0
 failed_tracks_thresh = 100
 rsfactor = 0.75
+compression = 0.35
 
 # set up output windows
 #cv2.namedWindow("input")
@@ -121,7 +123,7 @@ print("--Hardware-software interface set up!")
 
 
 # 5TH, start up the networking wrapper ------------------
-if cfg.enable_config:
+if cfg.enable_networking:
     net.setupParameters(cfg.TCP_port, cfg.UDP_port)
     print("--Networking interface configured. The remote must connect to this device in order to continue startup.")
 
@@ -248,6 +250,7 @@ while latch:
         fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
         if (only_draw_biggest_polygon): polset = "LargestPolygonOnly"
         else: polset = "AllPolygonsIncluded"
+        
         cv2.putText(
             camera_input,
             f"""CAMERA: {fps}fps  cam#{device}""".replace("\n", ""),
@@ -274,12 +277,35 @@ while latch:
         )
                 
             
+        cv2.imshow("output",camera_input)
+        camera_input = cv2.resize(camera_input, (0,0), fx=compression, fy=compression) 
+        d = pickle.dumps(camera_input)
+        net.sendTo("UDP", net.UDP_SOCKET, d, net.TCP_REMOTE_PEER[0])
         
-        cv2.imshow("output", camera_input)
+        
         
     # waitKey so the program doesn't crash
-    kb = cv2.waitKey(1)
     # ----------------------------------------------
+
+
+    # WIRELESS NETWORKING LOGIC (control packets that are sent over the TCP signaling channel)
+    command = net.readFrom("TCP", net.TCP_CONNECTION, 2048)
+    if command:
+        multicmd = str(command, "ascii").split(";")
+        for i in multicmd:
+            command = str(i).split(" ")
+            try:
+                if command[0] == "abspitch":
+                    sri.pitch(int(command[1]))
+                elif command[0] == "absyaw":
+                    sri.yaw(int(command[1]))
+                    
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Invalid command! No action was taken: "+str(e))
+            except AssertionError as e:
+                print("AssertionError, likely caused by pitch/yaw command: "+str(e))
+    # -------------------------------------------
+    kb = cv2.waitKey(5)
 
 
 

@@ -14,7 +14,7 @@ def readFrom(protocol, sock, bufSize = 1024):
         if protocol == "TCP":
             try:
                 return sock.recv(bufSize)
-            except:
+            except Exception as e:
                 return None
         elif protocol == "UDP":
             assert bufSize < 65535
@@ -24,20 +24,20 @@ def readFrom(protocol, sock, bufSize = 1024):
                 return None
     except (ConnectionResetError, OSError, BrokenPipeError) as e:
         print(f"[net] Cx Error {e}! Attempting a reconnect...")
-        initConnection()
+        #initConnection()
 
 
 def sendTo(protocol, sock, message, destiny = None):
     try:
         if protocol == "TCP":
-            sock.send(message)
+            sock.sendall(message)
         else:
             assert destiny != None
             sock.sendto(message, (destiny, data_channel_port))
         return None
     except (ConnectionResetError, OSError, BrokenPipeError) as e:
         print(f"[net] Cx Error {e}! Attempting a reconnect...")
-        initConnection()
+        #initConnection()
 
 def setupParameters(tcpport = 10007, udpport = 10009):
     global signaling_port, data_channel_port
@@ -77,6 +77,7 @@ def initConnection():
 
     # now that everything is set up, we can set global objects that can be read from
     TCP_CONNECTION = conn
+    TCP_CONNECTION.setblocking(0)
     TCP_CONNECTION.send(bytes(str(data_channel_port), "ascii"))
     TCP_REMOTE_PEER = addr
     UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
