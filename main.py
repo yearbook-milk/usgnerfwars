@@ -121,15 +121,17 @@ print("--Hardware-software interface set up!")
 
 
 # 5TH, start up the networking wrapper ------------------
-net.setupParameters(cfg.TCP_port, cfg.UDP_port)
-print("--Networking interface configured. The remote must connect to this device in order to continue startup.")
+if cfg.enable_config:
+    net.setupParameters(cfg.TCP_port, cfg.UDP_port)
+    print("--Networking interface configured. The remote must connect to this device in order to continue startup.")
 
-ip = os.system(cfg.checkip_command)
+    ip = os.system(cfg.checkip_command)
 
-print(f"--Using port {cfg.TCP_port}")
-print(f"--Network adapter information: {ip}")
-net.initConnection()
-
+    print(f"--Using port {cfg.TCP_port}")
+    print(f"--Network adapter information: {ip}")
+    net.initConnection()
+else:
+    print("-- Remote mode has been disabled. An output window will start on the local machine.")
 # --------------
 
 

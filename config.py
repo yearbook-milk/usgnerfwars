@@ -1,5 +1,6 @@
 TCP_port = 10007
 UDP_port = 10009
+enable_networking = False
 
 pin_config = {
     
