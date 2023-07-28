@@ -7,6 +7,8 @@ checkip_command = "ipconfig"                        # On startup, this cmd will 
                                                     # This should be your OS' network adapter info command, so you can see 
                                                     # its current IP address.
 
+restart_command = "start python main.py"            # What command to run if the remote tells the RPi to restart this program.
+
 # HARDWARE SOFTWARE INTERFACE SETTINGS:
 pin_config = {                                      # These control which pins on the RPi do what.
     
@@ -39,5 +41,7 @@ ct2r_minpolywidth = 69
 ct2r_minpolyht = 69
 
 default_camera = 0
+
+
 
 

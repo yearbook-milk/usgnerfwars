@@ -372,6 +372,11 @@ while latch:
                         updatePipeline()
                     elif command[0] == "stop":
                         latch = False
+                        reason = 0
+                    elif command[0] == "restart":
+                        latch = False
+                        reason = 1
+                        
                 
                 except (ValueError, KeyError, IndexError) as e:
                     print(f"Invalid command! No action was taken: "+str(e))
@@ -406,5 +411,8 @@ if cfg.enable_hsi:
 if cfg.enable_networking:
     net.TCP_SOCKET.close()
     net.UDP_SOCKET.close()
+if reason == 1:
+    os.chdir("..")
+    os.system(cfg.restart_command)
     
     
