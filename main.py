@@ -398,8 +398,13 @@ while latch:
 
 
 # release resources when done
+print("Gracefully shutting down...")
 cv2.destroyAllWindows()
 cap.release()
-sri.__shutdown()
-net.TCP_SOCKET.close()
-net.UDP_SOCKET.close()
+if cfg.enable_hsi:
+    sri.__shutdown()
+if cfg.enable_networking:
+    net.TCP_SOCKET.close()
+    net.UDP_SOCKET.close()
+    
+    
