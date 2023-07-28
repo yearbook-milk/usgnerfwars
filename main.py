@@ -94,7 +94,11 @@ rescan_on_lockbreak = True
 failed_tracks = 0
 failed_tracks_thresh = 100
 rsfactor = 0.75
-compression = 0.35
+compression = 0.25
+
+
+encoded_text     = []
+# (x,y,color,scale,content)
 
 # set up output windows
 #cv2.namedWindow("input")
@@ -109,7 +113,8 @@ if not cfg.enable_networking or cfg.show_local_output:
 
 
 # FOURTH, we set up our interface with the hardware ----
-
+pitch = 0
+yaw = 0
 if cfg.enable_hsi:
     import servo_relay_interface         as sri
     sri.config = cfg.pin_config
@@ -146,6 +151,7 @@ print("OK to go!")
 while latch:
     
     # TAKE A CAMERA INPUT --------------------------------------
+    encoded_text = []
     timer = cv2.getTickCount()
     ret, camera_input = cap.read()
     camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor) 
@@ -179,14 +185,18 @@ while latch:
                 for i in polygons:
                     x, y, w, h = i
                     cv2.rectangle(camera_input, (x,y), (x+w,y+h), (255, 255, 0), 2)
-                    cv2.putText(
-                        camera_input,
-                        "detection#"+str(indice),
-                        (x, y-10),
-                        cv2.FONT_HERSHEY_DUPLEX,
-                        0.50,
-                        (255,255,0)
-                    )
+
+                    if not cfg.enable_networking or cfg.show_local_output:
+                        cv2.putText(
+                            camera_input,
+                            "detection#"+str(indice),
+                            (x, y-10),
+                            cv2.FONT_HERSHEY_DUPLEX,
+                            0.50,
+                            (255,255,0)
+                        )
+                    else:
+                        encoded_text.append( [x, y, (255,255,0), 0.50, "detection#"+str(indice)] )
                     indice += 1
                     # if all polygons that were able to be produced are to be drawn, draw in cyan
             else:
@@ -198,14 +208,17 @@ while latch:
                 x, y, w, h = largestPolygon
                 polygons = [largestPolygon]
                 cv2.rectangle(camera_input, (x,y), (x+w,y+h), (255, 255, 0), 2)
-                cv2.putText(
+                if not cfg.enable_networking or cfg.show_local_output:
+                    cv2.putText(
                         camera_input,
                         "sole detection#"+str(0),
                         (x, y-10),
                         cv2.FONT_HERSHEY_DUPLEX,
                         0.50,
                         (255,255,0)
-                )
+                    )
+                else:
+                    encoded_text.append( [x, y, (255,255,0), 0.50, "sole detection#"+str(0)])
                 # if only the largest polygon is being drawn, draw in cyan
 
                 
@@ -252,39 +265,58 @@ while latch:
         fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
         if (only_draw_biggest_polygon): polset = "LargestPolygonOnly"
         else: polset = "AllPolygonsIncluded"
-        
-        cv2.putText(
-            camera_input,
-            f"""CAMERA: {fps}fps  cam#{device}""".replace("\n", ""),
-            (5,35),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.50,
-            (0,255,255)
-        )
-        cv2.putText(
-            camera_input,
-            f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""".replace("\n", ""),
-            (5,55),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.50,
-            (255,255,0)
-        )
-        cv2.putText(
-            camera_input,
-            f"""[0-9] Choose Tgt, [F] Forget Tgt, [O] Toggle LPO, [Q] Quit, [P] Pipln Update""".replace("\n", ""),
-            (5,75),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.35,
-            (0,0,255)
-        )
+
+        if not cfg.enable_networking:
+            cv2.putText(
+                camera_input,
+                f"""CAMERA: {fps}fps  cam#{device}""".replace("\n", ""),
+                (5,35),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (0,255,255)
+            )
+            cv2.putText(
+                camera_input,
+                f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""".replace("\n", ""),
+                (5,55),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (255,255,0)
+            )
+            cv2.putText(
+                camera_input,
+                f"""CONNECTIVITY: DISABLED""".replace("\n", ""),
+                (5,75),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (0,0,255)
+            )
+            cv2.putText(
+                camera_input,
+                f"""SERVO: {pitch}deg pitch    {yaw}deg yaw""".replace("\n", ""),
+                (5,95),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (0,0,0)
+            )
+        else:
+            encoded_text.append( [5, 35, (0, 255, 255), 0.35, f"""CAMERA: {fps}fps  cam#{device}""" ] )
+            encoded_text.append( [5, 45, (255, 255, 0), 0.35, f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""" ] )
+            encoded_text.append( [5, 55, (0, 0, 255), 0.35, f"""CONNECTIVITY: ENABLED [self]:{cfg.TCP_port}<=>{net.TCP_REMOTE_PEER[0]}:{net.TCP_REMOTE_PEER[1]}""" ] )
+            encoded_text.append( [5, 65, (0, 0, 0), 0.35, f"""SYSTEM: {pitch}deg pitch  {yaw}deg yaw""" ] )
+
+
                 
             
         if not cfg.enable_networking or cfg.show_local_output:
             cv2.imshow("output",camera_input)
         if cfg.enable_networking:
+            old_shape = camera_input.shape
             camera_input = cv2.resize(camera_input, (0,0), fx=compression, fy=compression) 
             d = pickle.dumps(camera_input)
-            net.sendTo("UDP", net.UDP_SOCKET, d, net.TCP_REMOTE_PEER[0])
+            text = pickle.dumps(encoded_text)
+            shape = pickle.dumps(old_shape)
+            net.sendTo("UDP", net.UDP_SOCKET, d + b"::::" + text + b"::::" + shape, net.TCP_REMOTE_PEER[0])
     # ----------------------------------------------
 
 
@@ -301,9 +333,11 @@ while latch:
                     if command[0] == "abspitch":
                         print(f"pitch {command[1]}")
                         if cfg.enable_hsi: sri.pitch(int(command[1]))
+                        pitch = int(command[1])
                     elif command[0] == "absyaw":
                         print(f"yaw {command[1]}")
                         if cfg.enable_hsi: sri.yaw(int(command[1]))
+                        yaw = int(command[1])
                         
                 except (ValueError, KeyError, IndexError) as e:
                     print(f"Invalid command! No action was taken: "+str(e))

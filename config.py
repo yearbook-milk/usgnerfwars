@@ -1,7 +1,7 @@
 # NETWORKING SETTINGS:
 TCP_port = 10007                                    # TCP signaling channel port number
 UDP_port = 10009                                    # UDP data channel port number
-enable_networking = True                            # Whether or not to enable networking at all (or operate locally)
+enable_networking = True                            # Whether or not to enable networking at all (for dev/debug only)
 
 checkip_command = "ipconfig"                        # On startup, this cmd will run and its result printed out in console
                                                     # This should be your OS' network adapter info command, so you can see 
@@ -22,5 +22,6 @@ enable_hsi = False                                  # Whether or not to enable t
                                                     # to be able to test on a non-RPi device)
 
 
-#
 
+# DISPLAY SETTINGS:
+show_local_output = False                           # Whether or not to display a video feed locally.

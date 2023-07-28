@@ -45,7 +45,6 @@ def setupParameters(tcpport = 10007, udpport = 10009):
     data_channel_port = udpport
     
 def initConnection():
-    time.sleep(5)
     print("[net] Waiting to connect again...")
     global TCP_CONNECTION, TCP_SOCKET, UDP_SOCKET, TCP_REMOTE_PEER, signaling_port, data_channel_port
     # if we're breaking up with the current pair, we close() the sockets in preparation for a nwe partner
