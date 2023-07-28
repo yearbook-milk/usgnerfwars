@@ -98,7 +98,8 @@ compression = 0.35
 
 # set up output windows
 #cv2.namedWindow("input")
-cv2.namedWindow("output")
+if not cfg.enable_networking or cfg.show_local_output:
+    cv2.namedWindow("output")
 #cv2.setMouseCallback("input", onclick)
 # -----------------------------------------
 
@@ -278,7 +279,8 @@ while latch:
         )
                 
             
-        cv2.imshow("output",camera_input)
+        if not cfg.enable_networking or cfg.show_local_output:
+            cv2.imshow("output",camera_input)
         if cfg.enable_networking:
             camera_input = cv2.resize(camera_input, (0,0), fx=compression, fy=compression) 
             d = pickle.dumps(camera_input)
