@@ -21,11 +21,6 @@ import aruco_marker_tracker          as amt
 
 import helpers
 
-
-import servo_relay_interface         as sri
-
-import remote                        as net
-
 import config                        as cfg
 
 
@@ -113,9 +108,14 @@ cv2.namedWindow("output")
 
 
 # FOURTH, we set up our interface with the hardware ----
-sri.config = cfg.pin_config
-sri.__initialize()
-print("--Hardware-software interface set up!")
+
+if cfg.enable_hsi:
+    import servo_relay_interface         as sri
+    sri.config = cfg.pin_config
+    sri.__initialize()
+    print("--Hardware-software interface set up!")
+else:
+    print("--The hardware-software interface was not set up.")
 #------------------------------------------------------
 
 
@@ -124,6 +124,7 @@ print("--Hardware-software interface set up!")
 
 # 5TH, start up the networking wrapper ------------------
 if cfg.enable_networking:
+    import remote                        as net
     net.setupParameters(cfg.TCP_port, cfg.UDP_port)
     print("--Networking interface configured. The remote must connect to this device in order to continue startup.")
 
@@ -278,34 +279,48 @@ while latch:
                 
             
         cv2.imshow("output",camera_input)
-        camera_input = cv2.resize(camera_input, (0,0), fx=compression, fy=compression) 
-        d = pickle.dumps(camera_input)
-        net.sendTo("UDP", net.UDP_SOCKET, d, net.TCP_REMOTE_PEER[0])
-        
-        
-        
-    # waitKey so the program doesn't crash
+        if cfg.enable_networking:
+            camera_input = cv2.resize(camera_input, (0,0), fx=compression, fy=compression) 
+            d = pickle.dumps(camera_input)
+            net.sendTo("UDP", net.UDP_SOCKET, d, net.TCP_REMOTE_PEER[0])
     # ----------------------------------------------
 
 
     # WIRELESS NETWORKING LOGIC (control packets that are sent over the TCP signaling channel)
-    command = net.readFrom("TCP", net.TCP_CONNECTION, 2048)
-    if command:
-        multicmd = str(command, "ascii").split(";")
-        for i in multicmd:
-            command = str(i).split(" ")
-            try:
-                if command[0] == "abspitch":
-                    sri.pitch(int(command[1]))
-                elif command[0] == "absyaw":
-                    sri.yaw(int(command[1]))
-                    
-            except (ValueError, KeyError, IndexError) as e:
-                print(f"Invalid command! No action was taken: "+str(e))
-            except AssertionError as e:
-                print("AssertionError, likely caused by pitch/yaw command: "+str(e))
+    if cfg.enable_networking:
+        command = net.readFrom("TCP", net.TCP_CONNECTION, 2048)
+        if not command:
+            command = net.readFrom("UDP", net.UDP_SOCKET, 2048)
+        if command:
+            multicmd = str(command, "ascii").split(";")
+            for i in multicmd:
+                command = str(i).split(" ")
+                try:
+                    if command[0] == "abspitch":
+                        print(f"pitch {command[1]}")
+                        if cfg.enable_hsi: sri.pitch(int(command[1]))
+                    elif command[0] == "absyaw":
+                        print(f"yaw {command[1]}")
+                        if cfg.enable_hsi: sri.yaw(int(command[1]))
+                        
+                except (ValueError, KeyError, IndexError) as e:
+                    print(f"Invalid command! No action was taken: "+str(e))
+                except AssertionError as e:
+                    print("AssertionError, likely caused by pitch/yaw command: "+str(e))
+
+
+        # clear the buffers, both the TCP signalling channel and the UDP channel
+        try:
+            while net.UDP_SOCKET.recv(65535): pass
+        except:
+            pass
+
+        try:
+            while net.TCP_CONNECTION.recv(65535): pass
+        except:
+            pass
     # -------------------------------------------
-    kb = cv2.waitKey(5)
+    kb = cv2.waitKey(1)
 
 
 

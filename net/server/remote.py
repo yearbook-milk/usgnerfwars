@@ -19,11 +19,11 @@ def readFrom(protocol, sock, bufSize = 1024):
         elif protocol == "UDP":
             assert bufSize < 65535
             try:
-                return sock.recvFrom(bufSize)
-            except:
+                return sock.recv(bufSize)
+            except Exception as e:
                 return None
     except (ConnectionResetError, OSError, BrokenPipeError) as e:
-        print(f"[net] Cx Error {e}! Attempting a reconnect...")
+        print(f"[net] Cx Error {e}! Recx logic disabled.")
         #initConnection()
 
 
@@ -36,7 +36,7 @@ def sendTo(protocol, sock, message, destiny = None):
             sock.sendto(message, (destiny, data_channel_port))
         return None
     except (ConnectionResetError, OSError, BrokenPipeError) as e:
-        print(f"[net] Cx Error {e}! Attempting a reconnect...")
+        print(f"[net] Cx Error {e}! Recx logic disabled.")
         #initConnection()
 
 def setupParameters(tcpport = 10007, udpport = 10009):
@@ -83,5 +83,5 @@ def initConnection():
     UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     UDP_SOCKET.setblocking(0)
     print("[net] Success!")
-    # UDP_SOCKET.bind( (addr[0], 10009) )
+    UDP_SOCKET.bind( ("0.0.0.0", data_channel_port) )
     
