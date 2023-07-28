@@ -25,3 +25,19 @@ enable_hsi = False                                  # Whether or not to enable t
 
 # DISPLAY SETTINGS:
 show_local_output = False                           # Whether or not to display a video feed locally.
+
+
+
+
+
+# COMPUTER VISION SETTINGS
+ct2r_hue_lower_tolerance = 20
+ct2r_hue_upper_tolerance = 20
+ct2r_saturation_lower_tolerance = 75
+ct2r_blur_level = 15
+ct2r_minpolywidth = 69
+ct2r_minpolyht = 69
+
+default_camera = 0
+
+

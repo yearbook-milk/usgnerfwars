@@ -25,13 +25,13 @@ import config                        as cfg
 
 
 
-print("--Imports complete!")
+print("-- Imports complete!")
 
 
 
 
 # FIRST, set up access to webcam and network -------------
-device = 0
+device = cfg.default_camera
 latch = True
 polygons = []
 
@@ -39,10 +39,10 @@ if device == None: device = int(input("--Which device (enter an int)? "))
 
 cap = cv2.VideoCapture(device)
 if not cap.isOpened():
-    print("--Webcam entry point failed to initialize!")
+    print("-- Webcam entry point failed to initialize!")
     exit(-1)
 else:
-    print("--Webcam OK!")
+    print("-- Webcam OK!")
 # --------------------------------------------
 
 
@@ -51,7 +51,14 @@ else:
 
 
 # SECOND, initialize all the stuff on the pipeline
-ct2r._init(lhs = 20, lha = 20, lss = 75, lblur = 15, lminPolygonWidth = 69, lminPolygonHeight = 69)
+ct2r._init(
+    lhs               = cfg.ct2r_hue_lower_tolerance,
+    lha               = cfg.ct2r_hue_upper_tolerance,
+    lss               = cfg.ct2r_saturation_lower_tolerance,
+    lblur             = cfg.ct2r_blur_level,
+    lminPolygonWidth  = cfg.ct2r_minpolywidth,
+    lminPolygonHeight = cfg.ct2r_minpolyht
+)
 am2r._init()
 
 inuse = []
@@ -73,7 +80,7 @@ def updatePipeline():
         "amt": amt
     })
     
-    print(f"--OK! Detection pipeline reconfigured. Using trackers {inuse} \n\n with input data {filterdata}. \n\n Tracker: {trackers_inuse}\n\n")
+    print(f"-- OK! Detection pipeline reconfigured. Using detectors {inuse} \n\n with input data {filterdata}. \n\n Tracker: {trackers_inuse}\n\n")
 
 updatePipeline()
 # ----------------------------------------
@@ -95,6 +102,8 @@ failed_tracks = 0
 failed_tracks_thresh = 100
 rsfactor = 0.75
 compression = 0.25
+
+last_successful_frame = None
 
 
 encoded_text     = []
@@ -119,9 +128,9 @@ if cfg.enable_hsi:
     import servo_relay_interface         as sri
     sri.config = cfg.pin_config
     sri.__initialize()
-    print("--Hardware-software interface set up!")
+    print("-- Hardware-software interface set up!")
 else:
-    print("--The hardware-software interface was not set up.")
+    print("-- The hardware-software interface was not set up.")
 #------------------------------------------------------
 
 
@@ -132,12 +141,12 @@ else:
 if cfg.enable_networking:
     import remote                        as net
     net.setupParameters(cfg.TCP_port, cfg.UDP_port)
-    print("--Networking interface configured. The remote must connect to this device in order to continue startup.")
+    print("-- Networking interface configured. The remote must connect to this device in order to continue startup. Network adapter info:")
 
     ip = os.system(cfg.checkip_command)
 
-    print(f"--Using port {cfg.TCP_port}")
-    print(f"--Network adapter information: {ip}")
+    print(f"-- Using port {cfg.TCP_port}")
+    print(f"-- {cfg.checkip_command} exit code: {ip}")
     net.initConnection()
 else:
     print("-- Remote mode has been disabled. An output window will start on the local machine.")
@@ -154,7 +163,8 @@ while latch:
     encoded_text = []
     timer = cv2.getTickCount()
     ret, camera_input = cap.read()
-    camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor) 
+    camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor)
+    last_successful_frame = camera_input
     if (ret):
         camera_input = helpers.increase_brightness(camera_input, value=10)
         #cv2.imshow("input", camera_input)
@@ -345,7 +355,7 @@ while latch:
                         kb = int(command[1])
                         try:
                             for i in trackers_inuse:
-                                i._init(camera_input, polygons[kb])
+                                i._init(last_successful_frame, polygons[kb])
                                 print("remote cmd: Initialized a tracker "+str(i))
                             lock = "LOCK"
                             failed_tracks = 0
@@ -360,6 +370,8 @@ while latch:
                     elif command[0] == "updatepipeline":
                         print("remote cmd: Reloading the pipeline at the command of the remote.")
                         updatePipeline()
+                    elif command[0] == "stop":
+                        latch = False
                 
                 except (ValueError, KeyError, IndexError) as e:
                     print(f"Invalid command! No action was taken: "+str(e))
@@ -388,3 +400,6 @@ while latch:
 # release resources when done
 cv2.destroyAllWindows()
 cap.release()
+sri.__shutdown()
+net.TCP_SOCKET.close()
+net.UDP_SOCKET.close()
