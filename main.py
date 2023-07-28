@@ -331,18 +331,40 @@ while latch:
                 command = str(i).split(" ")
                 try:
                     if command[0] == "abspitch":
-                        print(f"pitch {command[1]}")
+                        print(f"remote cmd: pitch {command[1]}")
                         if cfg.enable_hsi: sri.pitch(int(command[1]))
                         pitch = int(command[1])
                     elif command[0] == "absyaw":
-                        print(f"yaw {command[1]}")
+                        print(f"remote cmd: yaw {command[1]}")
                         if cfg.enable_hsi: sri.yaw(int(command[1]))
                         yaw = int(command[1])
-                        
+                    elif command[0] == "toggle_lpo":
+                        print(f"remote cmd: toggle_LPO {only_draw_biggest_polygon}->{not only_draw_biggest_polygon}")
+                        only_draw_biggest_polygon = not only_draw_biggest_polygon
+                    elif command[0] == "select":
+                        kb = int(command[1])
+                        try:
+                            for i in trackers_inuse:
+                                i._init(camera_input, polygons[kb])
+                                print("remote cmd: Initialized a tracker "+str(i))
+                            lock = "LOCK"
+                            failed_tracks = 0
+                            print("remote cmd: Locked on subject #"+str(kb)+" at the command of the remote.")
+                        except Exception as e:
+                            print("remote cmd: Failed to lock onto subject #"+str(kb)+": "+str(e))
+                    elif command[0] == "forget":
+                        the_tracker = None
+                        lock = "SCAN"
+                        failed_tracks = 0
+                        print("remote cmd: Lock released by remote.")
+                    elif command[0] == "updatepipeline":
+                        print("remote cmd: Reloading the pipeline at the command of the remote.")
+                        updatePipeline()
+                
                 except (ValueError, KeyError, IndexError) as e:
                     print(f"Invalid command! No action was taken: "+str(e))
                 except AssertionError as e:
-                    print("AssertionError, likely caused by pitch/yaw command: "+str(e))
+                    print("AssertionError! Command: "+str(e))
 
 
         # clear the buffers, both the TCP signalling channel and the UDP channel
