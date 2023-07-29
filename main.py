@@ -4,6 +4,7 @@ import numpy                         as np
 import sys
 import os
 import pickle
+import importlib
 
 sys.path.append(os.path.abspath("computervision"))
 sys.path.append(os.path.abspath("hsi"))
@@ -51,21 +52,25 @@ else:
 
 
 # SECOND, initialize all the stuff on the pipeline
-ct2r._init(
-    lhs               = cfg.ct2r_hue_lower_tolerance,
-    lha               = cfg.ct2r_hue_upper_tolerance,
-    lss               = cfg.ct2r_saturation_lower_tolerance,
-    lblur             = cfg.ct2r_blur_level,
-    lminPolygonWidth  = cfg.ct2r_minpolywidth,
-    lminPolygonHeight = cfg.ct2r_minpolyht
-)
-am2r._init()
+
 
 inuse = []
 trackers_inuse = []
 filterdata = {}
 
 def updatePipeline():
+    importlib.reload(cfg)
+    ct2r._init(
+        lhs               = cfg.ct2r_hue_lower_tolerance,
+        lha               = cfg.ct2r_hue_upper_tolerance,
+        lss               = cfg.ct2r_saturation_lower_tolerance,
+        lblur             = cfg.ct2r_blur_level,
+        lminPolygonWidth  = cfg.ct2r_minpolywidth,
+        lminPolygonHeight = cfg.ct2r_minpolyht
+    )
+    am2r._init()
+
+
     global inuse, filterdata, trackers_inuse
     inuse = eval(helpers.file_get_contents("detectorpipeline.txt"), {
         "ct2r": ct2r,
