@@ -21,6 +21,10 @@ public class WriteHandler implements HttpHandler {
       System.out.println("---- New request! ----");
 
       try {
+		  
+		  t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+		  
+		  
         System.out.println(t.getRequestMethod() + " " + t.getRequestURI());
         System.out.println(t.getRequestHeaders());
         // We need the post body here
@@ -32,9 +36,11 @@ public class WriteHandler implements HttpHandler {
           post_body.append(inputLine);
         }
         post_body_stream.close();
+		
+		System.out.println("Req. body: "+post_body.toString());
 
         String[] components = t.getRequestURI().toString().split("/");
-        String[] acceptable = {"detectionfilterdata.txt", "detectorpipeline.txt", "tracker.txt"};
+        String[] acceptable = {"detectorfilterdata.txt", "detectorpipeline.txt", "tracker.txt"};
         boolean pass = false;
         for (String filename : acceptable) {
           if (filename.equals(components[2])) {

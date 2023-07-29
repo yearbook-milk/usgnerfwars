@@ -22,17 +22,19 @@ public class ReadHandler implements HttpHandler {
       System.out.println("---- New request! ----");
 
       try {
+		t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");  
+		  
         System.out.println(t.getRequestMethod() + " " + t.getRequestURI());
         System.out.println(t.getRequestHeaders());
         // For this, we just process the URL and return the contents of the appropriate file,
         // assuming that this file is on the list that is allowed to be exposed.
 
         String[] components = t.getRequestURI().toString().split("/");
-        String[] acceptable = {"detectionfilterdata.txt", "detectorpipeline.txt", "tracker.txt"};
+        String[] acceptable = {"detectorfilterdata.txt", "detectorpipeline.txt", "tracker.txt", "doc.txt"};
         boolean pass = false;
         for (String filename : acceptable) {
           if (filename.equals(components[2])) {
-            pass = true;
+            pass = true; 
           }
         }
         if (pass == false) {
