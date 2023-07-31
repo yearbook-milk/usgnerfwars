@@ -1,1 +1,1 @@
-[cvbits_KCF,amt]
+[cv2bits_KCF,amt]
