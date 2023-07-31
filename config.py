@@ -3,7 +3,7 @@ TCP_port = 10007                                    # TCP signaling channel port
 UDP_port = 10009                                    # UDP data channel port number
 enable_networking = True                            # Whether or not to enable networking at all (for dev/debug only)
 
-checkip_command = "ipconfig"                        # On startup, this cmd will run and its result printed out in console
+checkip_command = "ifconfig"                        # On startup, this cmd will run and its result printed out in console
                                                     # This should be your OS' network adapter info command, so you can see 
                                                     # its current IP address.
 
@@ -12,15 +12,16 @@ restart_command = "start python main.py"            # What command to run if the
 # HARDWARE SOFTWARE INTERFACE SETTINGS:
 pin_config = {                                      # These control which pins on the RPi do what.
     
-"leftPin": 12,
-"rightPin": 33,
-"yawPin": 32,
+"leftPin": 18,
+"rightPin": 13,
+"yawPin": 12,
 "afterSpdCmdDelay": 0,                              # This should be set to 0, in order to make the pitch and yaw cmds nonblocking.
-"pulse_freq": 50                                    # Pulse frequency, in hZ. 
-    
+"pulse_freq": 50,                                    # Pulse frequency, in hZ.
+"pinsToSet": "leftPin rightPin yawPin"              # DONT CHANGE THIS 
+
 }
 
-enable_hsi = False                                  # Whether or not to enable the hardware-software interface (setting for developers
+enable_hsi = True                                   # Whether or not to enable the hardware-software interface (setting for developers
                                                     # to be able to test on a non-RPi device)
 
 

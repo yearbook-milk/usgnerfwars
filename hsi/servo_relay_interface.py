@@ -1,4 +1,4 @@
-import RPi.GPIO as GPIO
+import pigpio
 import time
 
 
@@ -8,11 +8,12 @@ config = {
 "rightPin": 0,
 "yawPin": 0,
 "afterSpdCmdDelay": 0,
-"pulse_freq": 50
-    
+"pulse_freq": 50,
+"pinsToSet": "leftPin rightPin yawPin"    
+
 }
 
-def angle_to_percent(angle):
+def legacy_angle_to_percent(angle):
     assert ((angle > 180 or angle < 0) == False)
     start = 4
     end = 12.5
@@ -20,48 +21,57 @@ def angle_to_percent(angle):
     angle_as_percent = angle * ratio
     return start + angle_as_percent
 
+def angle_to_pulse_width(angle):
+    #print(500 + ( (2500-500) * float(angle) / 180) )  
+    return 500 + ( (2500-500) * float(angle) / 180)
 
 def centerAllAxes():
-    global pwmL, pwmR, config, pwmP
-    pwmL.start(angle_to_percent(90))
-    pwmR.start(angle_to_percent(90))
-    pwmP.start(angle_to_percent(90))
+    global pwmL, pwmR, config, pwmP, pwm
+    for i in config["pinsToSet"].split(" "):
+        pwm.set_servo_pulsewidth( config[i],  angle_to_pulse_width(90))
     time.sleep(config["afterSpdCmdDelay"])
 
 
 def pitch(angle):
+    global pwmL, pwmR, config, pwmP, pwm
     assert (-90 <= angle <= 90)
     angle += 90
-    pwmL.start(angle_to_percent(180-angle))
-    pwmR.start(angle_to_percent(angle))
+    pwm.set_servo_pulsewidth( config["leftPin"], angle_to_pulse_width(angle) )
+    pwm.set_servo_pulsewidth( config["rightPin"], angle_to_pulse_width(180 - angle) )
     time.sleep(config["afterSpdCmdDelay"])
     
 def yaw(angle):
+    global pwmL, pwmR, config, pwmP, pwm
     assert (-90 <= angle <= 90)
     angle += 90
-    pwmP.start(angle_to_percent(angle))
+    pwm.set_servo_pulsewidth( config["yawPin"], angle_to_pulse_width(angle) )
     time.sleep(config["afterSpdCmdDelay"])
     
 
 def __initialize():
-    global GPIO, pwmL, pwmR, pwmP
-    GPIO.setmode(GPIO.BOARD) #Use Board numerotation mode
-    GPIO.setwarnings(False) #Disable warnings
+    global GPIO, pwmL, pwmR, pwmP, pwm
+    global config
 
-
+    #GPIO.setmode(GPIO.BOARD) #Use Board numerotation mode
+    #GPIO.setwarnings(False) #Disable warnings
+    
     frequence = config["pulse_freq"]
-    GPIO.setup(config["leftPin"], GPIO.OUT)
-    GPIO.setup(config["rightPin"], GPIO.OUT)
-    GPIO.setup(config["yawPin"], GPIO.OUT)
-    pwmL = GPIO.PWM(config["leftPin"], frequence)
-    pwmR = GPIO.PWM(config["rightPin"], frequence)
-    pwmP = GPIO.PWM(config["yawPin"], frequence)
 
+    pwm = pigpio.pi()
+    
+    
+    for i in config["pinsToSet"].split(" "):
+        pwm.set_mode(config[i], pigpio.OUTPUT)
+        pwm.set_PWM_frequency( config[i], frequence )
+
+
+       
+    
 
 def __shutdown():
+    global pwmL, pwmR, config, pwmP, pwm
+    global config
     #Close GPIO & cleanup
-    pwmL.stop()
-    pwmR.stop()
-    pwmP.stop()
-    GPIO.cleanup()
+    for i in config["pinsToSet"].split(" "):
+        pwm.set_PWM_dutycycle( config[i], 0 )
 
