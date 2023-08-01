@@ -19,6 +19,10 @@ pin_config = {                                      # These control which pins o
 "pulse_freq": 50,                                    # Pulse frequency, in hZ.
 "pinsToSet": "leftPin rightPin yawPin"              # DONT CHANGE THIS 
 
+
+"revPin": 23,
+"firePin": 24,
+
 }
 
 enable_hsi = True                                   # Whether or not to enable the hardware-software interface (setting for developers

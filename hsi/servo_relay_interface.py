@@ -7,11 +7,19 @@ config = {
 "leftPin": 0,
 "rightPin": 0,
 "yawPin": 0,
+
+"revPin": 0,
+"firePin": 0,
+
+
 "afterSpdCmdDelay": 0,
 "pulse_freq": 50,
 "pinsToSet": "leftPin rightPin yawPin"    
 
 }
+
+rev = False
+fire = False
 
 def legacy_angle_to_percent(angle):
     assert ((angle > 180 or angle < 0) == False)
@@ -47,6 +55,15 @@ def yaw(angle):
     pwm.set_servo_pulsewidth( config["yawPin"], angle_to_pulse_width(angle) )
     time.sleep(config["afterSpdCmdDelay"])
     
+def toggleFire():
+    global pwm, config,  fire
+    pwm.write(config["firePin"], int(not fire)) 
+    fire = not fire
+
+def toggleRev():
+    global pwm, config,  rev
+    pwm.write(config["revPin"], int(not rev)) 
+    rev = not rev
 
 def __initialize():
     global GPIO, pwmL, pwmR, pwmP, pwm
@@ -74,4 +91,8 @@ def __shutdown():
     #Close GPIO & cleanup
     for i in config["pinsToSet"].split(" "):
         pwm.set_PWM_dutycycle( config[i], 0 )
+    global fire, rev
+    if fire: toggleFire()
+    
+    if rev: toggleRev()
 

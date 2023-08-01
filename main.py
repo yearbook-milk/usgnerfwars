@@ -167,7 +167,7 @@ else:
 # WITH THIS DONE, START THE MAIN LOOP ---
 import time
 time.sleep(3)
-net.sendTo("TCP", net.TCP_CONNECTION, b"casconfig " + bytes(str(pn), "ascii"), net.TCP_REMOTE_PEER[0])
+if cfg.enable_networking: net.sendTo("TCP", net.TCP_CONNECTION, b"casconfig " + bytes(str(pn), "ascii"), net.TCP_REMOTE_PEER[0])
 
 print("OK to go!")
 while latch:
@@ -389,6 +389,13 @@ while latch:
                     elif command[0] == "restart":
                         latch = False
                         reason = 1
+                    elif command[0] == "dtoggle":
+                        if command[1] == "fire":
+                            sri.toggleFire()
+                            print("remote cmd: dtoggle fire")
+                        elif command[1] == "rev":
+                            sri.toggleRev()
+                            print("remote cmd: dtoggle rev")
                         
                 
                 except (ValueError, KeyError, IndexError) as e:
