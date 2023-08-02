@@ -109,7 +109,7 @@ the_tracker = None
 
 rescan_on_lockbreak = True
 failed_tracks = 0
-failed_tracks_thresh = 100
+failed_tracks_thresh = 175
 rsfactor = 0.75
 compression = 0.25
 
@@ -182,6 +182,7 @@ while latch:
     timer = cv2.getTickCount()
     ret, camera_input = cap.read()
     camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor)
+    #camera_input = cv2.rotate(camera_input, cv2.ROTATE_90_CLOCKWISE)
     last_successful_frame = camera_input
     if (ret):
         camera_input = helpers.increase_brightness(camera_input, value=10)
@@ -279,6 +280,41 @@ while latch:
                 centerpoint = (int(box[1] + 0.5 * box[3]), int(box[0] + 0.5 * box[2]))
                 # if the polygon is being tracked, draw in yellow
                 failed_tracks = 0
+                # now that we have a center point, we should calculate how much to turn the servo
+                screen_center = ( int(camera_input.shape[0] * 0.5), int(camera_input.shape[1] * 0.5) )
+                
+                # yaw check
+                if centerpoint[1] > screen_center[1]:
+                    print("target is to the right")
+                    if (-90 < yaw + 5 < 90):
+                        yaw += 5
+                        sri.yaw(yaw)
+                        print("Turned to the right 5 degrees")
+                    
+                if centerpoint[1] < screen_center[1]:
+                    print("target is to the left")
+                    if (-90 < yaw - 5 < 90):
+                        yaw -= 5
+                        sri.yaw(yaw)
+                        print("Turned to the right 5 degrees")
+                        
+                if centerpoint[0] > screen_center[0]:
+                    print("target is to the down")
+                    if (-90 < pitch + 5 < 90):
+                        yaw += 5
+                        sri.yaw(yaw)
+                        print("Pitched down 5 degrees")
+                        
+                if centerpoint[0] < screen_center[0]:
+                    print("target is to the up")
+                    if (-90 < yaw - 5 < 90):
+                        yaw -= 5
+                        sri.yaw(yaw)
+                        print("Pitched up 5 degrees")
+                        
+                camera_input = helpers.line(camera_input, "X=", int(camera_input.shape[1] * 0.5), (255,255,255))
+                camera_input = helpers.line(camera_input, "Y=", int(camera_input.shape[0] * 0.5), (255,255,255))
+            
             
             elif (not success) and (rescan_on_lockbreak):
                 failed_tracks += 1
@@ -287,9 +323,13 @@ while latch:
                 the_tracker = None
                 lock = "SCAN"
                 failed_tracks = 0
+  
             
+        
+        
+ 
            
-       # list FPS
+       # list FPS and other pertinent informations
         fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
         if (only_draw_biggest_polygon): polset = "LargestPolygonOnly"
         else: polset = "AllPolygonsIncluded"
