@@ -18,6 +18,7 @@ import color_track_return_rectangle  as ct2r
 import aruco_marker_return_rectangle as am2r
 
 import cvbuiltin_kcf_tracker         as cvbits_KCF
+import cvbuiltin_kcf_tracker_75      as cvbits_KCF_75P
 import aruco_marker_tracker          as amt
 
 import helpers
@@ -59,7 +60,10 @@ trackers_inuse = []
 filterdata = {}
 
 def updatePipeline():
-    importlib.reload(cfg)
+    for i in [cfg, ct2r, am2r, cvbits_KCF, cvbits_KCF_75P, amt]:
+        importlib.reload(i)
+        print(f"RELOADER: reloaded {i}")
+        
     ct2r._init(
         lhs               = cfg.ct2r_hue_lower_tolerance,
         lha               = cfg.ct2r_hue_upper_tolerance,
@@ -82,6 +86,7 @@ def updatePipeline():
     })
     trackers_inuse = eval(helpers.file_get_contents("tracker.txt"), {
         "cvbits_KCF": cvbits_KCF,
+        "cvbits_KCF_75P": cvbits_KCF_75P,
         "amt": amt
     })
     
@@ -323,8 +328,8 @@ while latch:
                 (0,0,0)
             )
         else:
-            encoded_text.append( [5, 35, (0, 255, 255), 0.35, f"""CAMERA: {fps}fps  cam#{device}""" ] )
-            encoded_text.append( [5, 45, (255, 255, 0), 0.35, f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""" ] )
+            encoded_text.append( [5, 35, (0, 100, 100), 0.35, f"""CAMERA: {fps}fps  cam#{device}""" ] )
+            encoded_text.append( [5, 45, (100, 100, 0), 0.35, f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""" ] )
             encoded_text.append( [5, 55, (0, 0, 255), 0.35, f"""CONNECTIVITY: ENABLED [self]:{cfg.TCP_port}<=>{net.TCP_REMOTE_PEER[0]}:{net.TCP_REMOTE_PEER[1]}""" ] )
             encoded_text.append( [5, 65, (0, 0, 0), 0.35, f"""SYSTEM: {pitch}deg pitch  {yaw}deg yaw""" ] )
 
