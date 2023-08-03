@@ -110,7 +110,7 @@ the_tracker = None
 rescan_on_lockbreak = True
 failed_tracks = 0
 failed_tracks_thresh = 175
-rsfactor = 0.75
+rsfactor = 1.0
 compression = 0.25
 
 last_successful_frame = None
@@ -284,36 +284,51 @@ while latch:
                 screen_center = ( int(camera_input.shape[0] * 0.5), int(camera_input.shape[1] * 0.5) )
                 
                 # yaw check
+                dx = abs(screen_center[0] - centerpoint[0])
+                dy = abs(screen_center[1] - centerpoint[1])
+                cax = int((screen_center[0] / (centerpoint[0] * 2)) * 180) -90
+                cyx = int((screen_center[1] / (centerpoint[1] * 2)) * 180) -90
                 if centerpoint[1] > screen_center[1]:
                     print("target is to the right")
-                    if (-90 < yaw + 5 < 90):
-                        yaw += 5
-                        sri.yaw(yaw)
-                        print("Turned to the right 5 degrees")
+                    yaw += 1
                     
                 if centerpoint[1] < screen_center[1]:
                     print("target is to the left")
-                    if (-90 < yaw - 5 < 90):
-                        yaw -= 5
-                        sri.yaw(yaw)
-                        print("Turned to the right 5 degrees")
+                    yaw -= 1
                         
                 if centerpoint[0] > screen_center[0]:
                     print("target is to the down")
-                    if (-90 < pitch + 5 < 90):
-                        yaw += 5
-                        sri.yaw(yaw)
-                        print("Pitched down 5 degrees")
+                    pitch += 1
                         
                 if centerpoint[0] < screen_center[0]:
                     print("target is to the up")
-                    if (-90 < yaw - 5 < 90):
-                        yaw -= 5
-                        sri.yaw(yaw)
-                        print("Pitched up 5 degrees")
-                        
+                    pitch -= 1
+                
+                if (yaw > 90): yaw = 90
+                if (yaw < -90): yaw = -90
+                
+                if (pitch > 90): pitch = 90
+                if (pitch < 35): pitch = 35
+                
+                #sri.pitch(pitch)
+                sri.yaw(yaw)
+                #print(cax, cyx)
+                
+                #pitch += int(0.05 * cyx)
+                #if (pitch > +90): pitch = +90
+                #if (pitch < -35): pitch = -35
+                
+                #yaw -= int(0.05 * cax)
+                #if (yaw > 90): yaw = +90
+                #if (yaw < 90): yaw = -90
+                
+                #sri.pitch(pitch)
+                #sri.yaw(yaw)
+                
                 camera_input = helpers.line(camera_input, "X=", int(camera_input.shape[1] * 0.5), (255,255,255))
                 camera_input = helpers.line(camera_input, "Y=", int(camera_input.shape[0] * 0.5), (255,255,255))
+                
+                
             
             
             elif (not success) and (rescan_on_lockbreak):

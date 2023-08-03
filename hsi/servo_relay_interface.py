@@ -42,7 +42,7 @@ def centerAllAxes():
 
 def pitch(angle):
     global pwmL, pwmR, config, pwmP, pwm
-    assert (-90 <= angle <= 90)
+    assert (-35 <= angle <= 90)
     angle += 90
     pwm.set_servo_pulsewidth( config["leftPin"], angle_to_pulse_width(angle) )
     pwm.set_servo_pulsewidth( config["rightPin"], angle_to_pulse_width(180 - angle) )
