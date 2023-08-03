@@ -14,6 +14,7 @@ These are algorithms that are supposed to take in the frame and mark out all pot
 These are algorithms that are supposed to "lock onto" a target. Instead of marking out all potential targets, these algorithms will seek out THE object with a specific profile. For instance, if there are two green shirted people in frame, and you choose to lock onto one of them, a tracker will be used to track that person, and while that tracker is in use, the program will ignore the other person and track the selected one.<br>
 <br>
 * <b>cvbits_KCF</b>: This one uses the cv2 built in KCF tracking alg. to track a subject.<br>
+* <b>cvbits_KCF_75P</b>: This one uses the cv2 built in KCF tracking alg. to track a subject, but will shrink the initial ROI to 75% of its size before tracking it, to reduce CPU load.<br>
 <br>
 * <b>amt</b>: This one will track an Aruco marker with a selected ID. For instance, if you have IDs 69 and 420 and in frame, and you lock onto the   person with a 69 Aruco marker on them, the tracker will ignore the other person and track the person with the Aruco marker with ID 69.<br>
 <br>
