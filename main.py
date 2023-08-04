@@ -119,6 +119,7 @@ rsfactor = 1.0
 compression = 0.15
 
 last_successful_frame = None
+last_success_box = None
 
 encoded_text     = []
 # (x,y,color,scale,content)
@@ -279,6 +280,7 @@ while latch:
                 w = int(w / successes)
                 h = int(h / successes)
                 box = (x, y, w, h)
+                last_success_box = box
                 cv2.rectangle(camera_input, box, (0, 255, 255), 2)
                 camera_input = helpers.line(camera_input, "X=", int(box[0] + 0.5 * box[2]), (0,255,255))
                 camera_input = helpers.line(camera_input, "Y=", int(box[1] + 0.5 * box[3]), (0,255,255))
@@ -361,14 +363,50 @@ while latch:
                 except ZeroDivisionError:
                     print("ZeroDivisionError while attempting to move target to center using servos...")
             
+            
+            # if the trackers were not able to detect anything
             elif (not success) and (rescan_on_lockbreak):
                 failed_tracks += 1
 
+            # if the failed track frames have exceeded the unlock limit
             if (failed_tracks >= failed_tracks_thresh):
                 the_tracker = None
                 lock = "SCAN"
                 failed_tracks = 0
 
+            # attempt redetect, resolve, relock if enabled
+            if (failed_tracks >= cfg.attempt_drr_after and cfg.attempt_detect_resolve_relock):
+                print("Attempting a redetection after a failed lock...")
+                # REDETECT (this is mostly a copy of the code located in the SCAN portion, minus the portions for sorting and LPO
+                
+                polygons = []
+                for i in inuse:
+                    polygons += i._attempt_detection(camera_input, filterdata)[0]
+                print(f"{len(polygons)} detections in total,")
+                
+                  
+                # RESOLUTION (this will pick out the detection that is closest to the thing, and only within the bounding box
+                the_bbox = None
+                old_bbox = helpers.resizeBox(last_success_box, 1.00)
+                camera_input = cv2.rectangle(camera_input, old_bbox, (100, 100, 0), 2)
+                acceptable = []
+                for i in polygons:
+                    # first, check if the detection is a neighbor of the the original bbox
+                    if helpers.AtouchesB(i, old_bbox): acceptable.append(i)
+                print(f"{len(acceptable)} neighboring detections to be considered,")
+                
+                for i in acceptable:
+                    # second, check see which detection is the closest to the original bbox
+                    camera_input = cv2.rectangle(camera_input, i, (0, 100, 0), 2)
+                    
+                cv2.imshow("dbg", camera_input)
+                
+                    
+                    
+                    
+                
+                
+                # RELOCKING
             
         
         

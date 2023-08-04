@@ -1,7 +1,7 @@
 # NETWORKING SETTINGS:
 TCP_port = 10007                                    # TCP signaling channel port number
 UDP_port = 10009                                    # UDP data channel port number
-enable_networking = True                            # Whether or not to enable networking at all (for dev/debug only)
+enable_networking = False                           # Whether or not to enable networking at all (for dev/debug only)
 
 checkip_command = "ifconfig"                        # On startup, this cmd will run and its result printed out in console
                                                     # This should be your OS' network adapter info command, so you can see 
@@ -25,7 +25,7 @@ pin_config = {                                      # These control which pins o
 
 }
 
-enable_hsi = True                                   # Whether or not to enable the hardware-software interface (setting for developers
+enable_hsi = False                                  # Whether or not to enable the hardware-software interface (setting for developers
                                                     # to be able to test on a non-RPi device)
 
 
@@ -58,4 +58,6 @@ yaw_mid_step =    (45, 2.75)
 yaw_low_step =    (0, 1.3)
 
 
-
+# RELOCKER SETTINGS
+attempt_detect_resolve_relock = True
+attempt_drr_after = 15
