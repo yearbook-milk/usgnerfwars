@@ -38,9 +38,9 @@ show_local_output = False                           # Whether or not to display 
 
 
 # COMPUTER VISION SETTINGS
-ct2r_hue_lower_tolerance = 20
-ct2r_hue_upper_tolerance = 20
-ct2r_saturation_lower_tolerance = 0
+ct2r_hue_lower_tolerance = 25
+ct2r_hue_upper_tolerance = 25
+ct2r_saturation_lower_tolerance = 69
 ct2r_blur_level = 15
 ct2r_minpolywidth = 40
 ct2r_minpolyht = 40
@@ -54,8 +54,8 @@ centering_tolerance = 50
 pitch_step =      1
 
 yaw_high_step =   (85, 3)
-yaw_mid_step =    (65, 2.25)
-yaw_low_step =    (0, 1.2)
+yaw_mid_step =    (45, 2.75)
+yaw_low_step =    (0, 1.3)
 
 
 

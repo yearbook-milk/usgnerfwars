@@ -292,10 +292,11 @@ while latch:
                 try:
                     dx = abs(screen_center[0] - centerpoint[0])
                     dy = abs(screen_center[1] - centerpoint[1])
-                    cax = int((screen_center[0] / (centerpoint[0] * 2)) * 180) -90
-                    cyx = int((screen_center[1] / (centerpoint[1] * 2)) * 180) -90
+                    cax = (dx / centerpoint[0]) * 90
+           
+                    print(cax * 0.01)
                     if ( \
-                        centerpoint[0] not in range(screen_center[0] - cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance)  \
+                        True and centerpoint[0] not in range(screen_center[0] - cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance)  \
                     ):
 
                         if centerpoint[0] > screen_center[0]:
@@ -311,7 +312,7 @@ while latch:
 
 
                     if ( \
-                        centerpoint[1] not in range(screen_center[1] - cfg.centering_tolerance, screen_center[1] + cfg.centering_tolerance)  \
+                        True and centerpoint[1] not in range(screen_center[1] - cfg.centering_tolerance, screen_center[1] + cfg.centering_tolerance)  \
                     ):
                         if centerpoint[1] > screen_center[1]:
                             print(f"target is to the right of centerline {dx}px")
@@ -336,11 +337,15 @@ while latch:
                         #sri.yaw(yaw)
                         #print(cax, cyx)
                         
-                        #pitch += int(0.01 * cyx)
+                        #pitch += float(0.05 * cyx)
                         #if (pitch > +90): pitch = +90
                         #if (pitch < -35): pitch = -35
                         
-                        #yaw -= int(0.01 * cax)
+                        #if centerpoint[1] not in range(screen_center[1] - cfg.centering_tolerance, screen_center[1] + cfg.centering_tolerance):
+                        #    if centerpoint[1] > screen_center[1]:
+                        #        yaw  += 0.01 * cax
+                        #    if centerpoint[1] < screen_center[1]:
+                        #        yaw  -= 0.01 * cax
                         #if (yaw > 90): yaw = +90
                         #if (yaw < 90): yaw = -90
                         
@@ -467,12 +472,12 @@ while latch:
                 try:
                     if command[0] == "abspitch":
                         print(f"remote cmd: pitch {command[1]}")
-                        if cfg.enable_hsi: sri.pitch(int(command[1]))
-                        pitch = int(command[1])
+                        if cfg.enable_hsi: sri.pitch(float(command[1]))
+                        pitch = float(command[1])
                     elif command[0] == "absyaw":
                         print(f"remote cmd: yaw {command[1]}")
-                        if cfg.enable_hsi: sri.yaw(int(command[1]))
-                        yaw = int(command[1])
+                        if cfg.enable_hsi: sri.yaw(float(command[1]))
+                        yaw = float(command[1])
                     elif command[0] == "toggle_lpo":
                         print(f"remote cmd: toggle_LPO {only_draw_biggest_polygon}->{not only_draw_biggest_polygon}")
                         only_draw_biggest_polygon = not only_draw_biggest_polygon
