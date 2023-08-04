@@ -1,3 +1,4 @@
+
 print("Starting up...")
 import cv2
 import numpy                         as np
@@ -300,13 +301,13 @@ while latch:
                         if centerpoint[0] > screen_center[0]:
                             print(f"target is below the centerline by {dy}px")
                             pitch += 1
-                                
+                               
                         if centerpoint[0] < screen_center[0]:
                             print(f"target is above the centerline by {dy}px")
                             pitch -= 1
 
                         if (pitch > 90): pitch = 90
-                        if (pitch < 35): pitch = 35
+                        if (pitch < -35): pitch = -35
 
 
                     if ( \
@@ -314,11 +315,15 @@ while latch:
                     ):
                         if centerpoint[1] > screen_center[1]:
                             print(f"target is to the right of centerline {dx}px")
-                            yaw += 1
+                            if dx > 85: yaw += 3
+                            elif dx > 65: yaw += 2.25
+                            else: yaw += 1.2
                             
                         if centerpoint[1] < screen_center[1]:
                             print(f"target is to the left of centerline {dx}px")
-                            yaw -= 1
+                            if dx > 85: yaw -= 3
+                            elif dx > 65: yaw -= 2.25
+                            else: yaw -= 1.2
                                 
 
                         
@@ -331,16 +336,16 @@ while latch:
                         #sri.yaw(yaw)
                         #print(cax, cyx)
                         
-                        #pitch += int(0.05 * cyx)
+                        #pitch += int(0.01 * cyx)
                         #if (pitch > +90): pitch = +90
                         #if (pitch < -35): pitch = -35
                         
-                        #yaw -= int(0.05 * cax)
+                        #yaw -= int(0.01 * cax)
                         #if (yaw > 90): yaw = +90
                         #if (yaw < 90): yaw = -90
                         
-                        #sri.pitch(pitch)
-                        #sri.yaw(yaw)
+                        sri.pitch(pitch)
+                        sri.yaw(yaw)
                         pass
                     
                     camera_input = helpers.line(camera_input, "X=", int(camera_input.shape[1] * 0.5), (255,0,255))

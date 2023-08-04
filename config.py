@@ -25,7 +25,7 @@ pin_config = {                                      # These control which pins o
 
 }
 
-enable_hsi = False                                  # Whether or not to enable the hardware-software interface (setting for developers
+enable_hsi = True                                   # Whether or not to enable the hardware-software interface (setting for developers
                                                     # to be able to test on a non-RPi device)
 
 
