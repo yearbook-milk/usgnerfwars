@@ -300,11 +300,11 @@ while latch:
 
                         if centerpoint[0] > screen_center[0]:
                             print(f"target is below the centerline by {dy}px")
-                            pitch += 1
+                            pitch += cfg.pitch_step
                                
                         if centerpoint[0] < screen_center[0]:
                             print(f"target is above the centerline by {dy}px")
-                            pitch -= 1
+                            pitch -= cfg.pitch_step
 
                         if (pitch > 90): pitch = 90
                         if (pitch < -35): pitch = -35
@@ -315,15 +315,15 @@ while latch:
                     ):
                         if centerpoint[1] > screen_center[1]:
                             print(f"target is to the right of centerline {dx}px")
-                            if dx > 85: yaw += 3
-                            elif dx > 65: yaw += 2.25
-                            else: yaw += 1.2
+                            if dx > cfg.yaw_high_step[0]: yaw += cfg.yaw_high_step[1]
+                            elif dx > cfg.yaw_mid_step[0]: yaw += cfg.yaw_mid_step[1]
+                            else: yaw += cfg.yaw_low_step[1]
                             
                         if centerpoint[1] < screen_center[1]:
                             print(f"target is to the left of centerline {dx}px")
-                            if dx > 85: yaw -= 3
-                            elif dx > 65: yaw -= 2.25
-                            else: yaw -= 1.2
+                            if dx > cfg.yaw_high_step[0]: yaw -= cfg.yaw_high_step[1]
+                            elif dx > cfg.yaw_mid_step[0]: yaw -= cfg.yaw_mid_step[1]
+                            else: yaw -= cfg.yaw_low_step[1]
                                 
 
                         

@@ -47,6 +47,15 @@ ct2r_minpolyht = 40
 
 default_camera = 0
 
+
+# AUTO TARGET SETTINGS
 centering_tolerance = 50
+
+pitch_step =      1
+
+yaw_high_step =   (85, 3)
+yaw_mid_step =    (65, 2.25)
+yaw_low_step =    (0, 1.2)
+
 
 
