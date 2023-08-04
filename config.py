@@ -25,7 +25,7 @@ pin_config = {                                      # These control which pins o
 
 }
 
-enable_hsi = True                                   # Whether or not to enable the hardware-software interface (setting for developers
+enable_hsi = False                                  # Whether or not to enable the hardware-software interface (setting for developers
                                                     # to be able to test on a non-RPi device)
 
 
@@ -40,13 +40,13 @@ show_local_output = False                           # Whether or not to display 
 # COMPUTER VISION SETTINGS
 ct2r_hue_lower_tolerance = 20
 ct2r_hue_upper_tolerance = 20
-ct2r_saturation_lower_tolerance = 85
+ct2r_saturation_lower_tolerance = 0
 ct2r_blur_level = 15
-ct2r_minpolywidth = 49
-ct2r_minpolyht = 49
+ct2r_minpolywidth = 40
+ct2r_minpolyht = 40
 
 default_camera = 0
 
-
+centering_tolerance = 50
 
 

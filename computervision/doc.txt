@@ -16,5 +16,7 @@ These are algorithms that are supposed to "lock onto" a target. Instead of marki
 * <b>cvbits_KCF</b>: This one uses the cv2 built in KCF tracking alg. to track a subject.<br>
 * <b>cvbits_KCF_75P</b>: This one uses the cv2 built in KCF tracking alg. to track a subject, but will shrink the initial ROI to 75% of its size before tracking it, to reduce CPU load.<br>
 <br>
+* <b>cvbits_CSRT and cvbits_CSRT_75P</b>: The same thing as cvbits_KCF and cvbits_KCF_75P, but with CSRT tracker<br>
+<br>
 * <b>amt</b>: This one will track an Aruco marker with a selected ID. For instance, if you have IDs 69 and 420 and in frame, and you lock onto the   person with a 69 Aruco marker on them, the tracker will ignore the other person and track the person with the Aruco marker with ID 69.<br>
 <br>

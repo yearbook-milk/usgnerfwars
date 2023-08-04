@@ -19,6 +19,8 @@ import aruco_marker_return_rectangle as am2r
 
 import cvbuiltin_kcf_tracker         as cvbits_KCF
 import cvbuiltin_kcf_tracker_75      as cvbits_KCF_75P
+import cvbuiltin_csrt_tracker        as cvbits_CSRT
+import cvbuiltin_csrt_tracker_75     as cvbits_CSRT_75P
 import aruco_marker_tracker          as amt
 
 import helpers
@@ -87,6 +89,8 @@ def updatePipeline():
     trackers_inuse = eval(helpers.file_get_contents("tracker.txt"), {
         "cvbits_KCF": cvbits_KCF,
         "cvbits_KCF_75P": cvbits_KCF_75P,
+        "cvbits_CSRT": cvbits_CSRT,
+        "cvbits_CSRT_75P": cvbits_CSRT_75P,
         "amt": amt
     })
     
@@ -111,10 +115,9 @@ rescan_on_lockbreak = True
 failed_tracks = 0
 failed_tracks_thresh = 175
 rsfactor = 1.0
-compression = 0.25
+compression = 0.15
 
 last_successful_frame = None
-
 
 encoded_text     = []
 # (x,y,color,scale,content)
@@ -181,10 +184,11 @@ while latch:
     encoded_text = []
     timer = cv2.getTickCount()
     ret, camera_input = cap.read()
-    camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor)
     #camera_input = cv2.rotate(camera_input, cv2.ROTATE_90_CLOCKWISE)
     last_successful_frame = camera_input
+    command = None
     if (ret):
+        camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor)
         camera_input = helpers.increase_brightness(camera_input, value=10)
         #cv2.imshow("input", camera_input)
 
@@ -284,52 +288,68 @@ while latch:
                 screen_center = ( int(camera_input.shape[0] * 0.5), int(camera_input.shape[1] * 0.5) )
                 
                 # yaw check
-                dx = abs(screen_center[0] - centerpoint[0])
-                dy = abs(screen_center[1] - centerpoint[1])
-                cax = int((screen_center[0] / (centerpoint[0] * 2)) * 180) -90
-                cyx = int((screen_center[1] / (centerpoint[1] * 2)) * 180) -90
-                if centerpoint[1] > screen_center[1]:
-                    print("target is to the right")
-                    yaw += 1
+                try:
+                    dx = abs(screen_center[0] - centerpoint[0])
+                    dy = abs(screen_center[1] - centerpoint[1])
+                    cax = int((screen_center[0] / (centerpoint[0] * 2)) * 180) -90
+                    cyx = int((screen_center[1] / (centerpoint[1] * 2)) * 180) -90
+                    if ( \
+                        centerpoint[0] not in range(screen_center[0] - cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance)  \
+                    ):
+
+                        if centerpoint[0] > screen_center[0]:
+                            print(f"target is below the centerline by {dy}px")
+                            pitch += 1
+                                
+                        if centerpoint[0] < screen_center[0]:
+                            print(f"target is above the centerline by {dy}px")
+                            pitch -= 1
+
+                        if (pitch > 90): pitch = 90
+                        if (pitch < 35): pitch = 35
+
+
+                    if ( \
+                        centerpoint[1] not in range(screen_center[1] - cfg.centering_tolerance, screen_center[1] + cfg.centering_tolerance)  \
+                    ):
+                        if centerpoint[1] > screen_center[1]:
+                            print(f"target is to the right of centerline {dx}px")
+                            yaw += 1
+                            
+                        if centerpoint[1] < screen_center[1]:
+                            print(f"target is to the left of centerline {dx}px")
+                            yaw -= 1
+                                
+
+                        
+                        if (yaw > 90): yaw = 90
+                        if (yaw < -90): yaw = -90
+                        
+
+                    if cfg.enable_hsi:
+                        #sri.pitch(pitch)
+                        #sri.yaw(yaw)
+                        #print(cax, cyx)
+                        
+                        #pitch += int(0.05 * cyx)
+                        #if (pitch > +90): pitch = +90
+                        #if (pitch < -35): pitch = -35
+                        
+                        #yaw -= int(0.05 * cax)
+                        #if (yaw > 90): yaw = +90
+                        #if (yaw < 90): yaw = -90
+                        
+                        #sri.pitch(pitch)
+                        #sri.yaw(yaw)
+                        pass
                     
-                if centerpoint[1] < screen_center[1]:
-                    print("target is to the left")
-                    yaw -= 1
-                        
-                if centerpoint[0] > screen_center[0]:
-                    print("target is to the down")
-                    pitch += 1
-                        
-                if centerpoint[0] < screen_center[0]:
-                    print("target is to the up")
-                    pitch -= 1
+                    camera_input = helpers.line(camera_input, "X=", int(camera_input.shape[1] * 0.5), (255,0,255))
+                    camera_input = helpers.line(camera_input, "Y=", int(camera_input.shape[0] * 0.5), (255,0,255))
+                    camera_input = cv2.rectangle(camera_input, (screen_center[1] - cfg.centering_tolerance, screen_center[0] - cfg.centering_tolerance), (screen_center[1] + cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance), (255,0,255), 2 )
+                    
                 
-                if (yaw > 90): yaw = 90
-                if (yaw < -90): yaw = -90
-                
-                if (pitch > 90): pitch = 90
-                if (pitch < 35): pitch = 35
-                
-                #sri.pitch(pitch)
-                sri.yaw(yaw)
-                #print(cax, cyx)
-                
-                #pitch += int(0.05 * cyx)
-                #if (pitch > +90): pitch = +90
-                #if (pitch < -35): pitch = -35
-                
-                #yaw -= int(0.05 * cax)
-                #if (yaw > 90): yaw = +90
-                #if (yaw < 90): yaw = -90
-                
-                #sri.pitch(pitch)
-                #sri.yaw(yaw)
-                
-                camera_input = helpers.line(camera_input, "X=", int(camera_input.shape[1] * 0.5), (255,255,255))
-                camera_input = helpers.line(camera_input, "Y=", int(camera_input.shape[0] * 0.5), (255,255,255))
-                
-                
-            
+                except ZeroDivisionError:
+                    print("ZeroDivisionError while attempting to move target to center using servos...")
             
             elif (not success) and (rescan_on_lockbreak):
                 failed_tracks += 1
@@ -338,7 +358,7 @@ while latch:
                 the_tracker = None
                 lock = "SCAN"
                 failed_tracks = 0
-  
+
             
         
         
@@ -382,6 +402,14 @@ while latch:
                 0.50,
                 (0,0,0)
             )
+            cv2.putText(
+                camera_input,
+                f"""KB: [F]ire [R]ev, [Q]uit, LP[O] [U]nlock Reloa[D]PL [0-9]Select""".replace("\n", ""),
+                (5,115),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (0,100,0)
+            )
         else:
             encoded_text.append( [5, 35, (0, 100, 100), 0.35, f"""CAMERA: {fps}fps  cam#{device}""" ] )
             encoded_text.append( [5, 45, (100, 100, 0), 0.35, f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""" ] )
@@ -408,8 +436,27 @@ while latch:
         command = net.readFrom("TCP", net.TCP_CONNECTION, 2048)
         if not command:
             command = net.readFrom("UDP", net.UDP_SOCKET, 2048)
-        if command:
-            multicmd = str(command, "ascii").split(";")
+    else:
+        kb = cv2.waitKey(1)
+        if   kb == ord("f"):
+            command = "dtoggle fire"
+        elif kb == ord("r"):
+            command = "dtoggle rev"
+        elif kb == ord("q"):
+            command = "stop 0"
+        elif kb == ord("o"):
+            command = "toggle_lpo 0"
+        elif kb == ord("u"):
+            command = "forget 0"
+        elif (48 <= kb <= 57):
+            command = f"select {kb-48}"
+        elif kb == ord("d"):
+            updatePipeline()
+        
+
+    if command:
+            try: multicmd = str(command, "ascii").split(";")
+            except: multicmd = command.split(";")
             for i in multicmd:
                 command = str(i).split(" ")
                 try:
@@ -446,10 +493,10 @@ while latch:
                     elif command[0] == "stop":
                         latch = False
                         reason = 0
-                    elif command[0] == "restart":
+                    elif command[0] == "restart" and cfg.enable_networking:
                         latch = False
                         reason = 1
-                    elif command[0] == "dtoggle":
+                    elif command[0] == "dtoggle" and cfg.enable_hsi:
                         if command[1] == "fire":
                             sri.toggleFire()
                             print("remote cmd: dtoggle fire")
@@ -464,18 +511,18 @@ while latch:
                     print("AssertionError! Command: "+str(e))
 
 
-        # clear the buffers, both the TCP signalling channel and the UDP channel
-        try:
-            while net.UDP_SOCKET.recv(65535): pass
-        except:
-            pass
+            # clear the buffers, both the TCP signalling channel and the UDP channel
+            if cfg.enable_networking:
+                try:
+                    while net.UDP_SOCKET.recv(65535): pass
+                except:
+                    pass
 
-        try:
-            while net.TCP_CONNECTION.recv(65535): pass
-        except:
-            pass
+                try:
+                    while net.TCP_CONNECTION.recv(65535): pass
+                except:
+                    pass
     # -------------------------------------------
-    kb = cv2.waitKey(1)
 
 
 
