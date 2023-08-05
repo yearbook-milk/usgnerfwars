@@ -56,8 +56,6 @@ else:
 
 
 # SECOND, initialize all the stuff on the pipeline
-
-
 inuse = []
 trackers_inuse = []
 filterdata = {}
@@ -189,6 +187,8 @@ while latch:
     #camera_input = cv2.rotate(camera_input, cv2.ROTATE_90_CLOCKWISE)
     last_successful_frame = camera_input
     command = None
+    # -----------------------------------------------------------
+
     if (ret):
         camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor)
         camera_input = helpers.increase_brightness(camera_input, value=10)
@@ -198,7 +198,7 @@ while latch:
         polygons = []
         for i in inuse:
             polygons += i._attempt_detection(camera_input, filterdata)[0]
-            
+        # SCAN FOR CANDIDATES ------------------------------------------------------
         if (lock == "SCAN"):
 
             if not only_draw_biggest_polygon:
@@ -255,8 +255,13 @@ while latch:
                 else:
                     encoded_text.append( [x, y, (255,255,0), 0.50, "sole detection#"+str(0)])
                 # if only the largest polygon is being drawn, draw in cyan
-
+        #-------------------------------------------------------------------
                 
+                
+                
+                
+                
+        # LOCK ONTO TARGET --------------------------------------------------
         elif (lock == "LOCK"):
             if (the_tracker == None):
                 lock == "SCAN"
@@ -274,6 +279,7 @@ while latch:
                     successes += 1
                 
             success = (successes > 0)
+            # IF SUCCESSFUL TRACK  --------------------------------------------
             if (success):
                 x = int(x / successes)
                 y = int(y / successes)
@@ -362,9 +368,13 @@ while latch:
                 
                 except ZeroDivisionError:
                     print("ZeroDivisionError while attempting to move target to center using servos...")
+        # IF SUCCESSFUL TRACK  --------------------------------------------
             
             
-            # if the trackers were not able to detect anything
+            
+            
+            
+            # IF BAD TRACK ----------------------------------------------------
             elif (not success):
                 failed_tracks += 1
 
@@ -374,7 +384,7 @@ while latch:
                 lock = "SCAN"
                 failed_tracks = 0
 
-            # attempt redetect, resolve, relock if enabled
+                # 3R ATTEMPT -----------------------------------------------------------
             if (failed_tracks >= cfg.attempt_drr_after and cfg.attempt_detect_resolve_relock):
                 print("Attempting a redetection after a failed lock...")
                 # REDETECT (this is mostly a copy of the code located in the SCAN portion, minus the portions for sorting and LPO
@@ -438,11 +448,16 @@ while latch:
                             print("auto redetect-resolve-relock: Locked on subject with ROI "+str(final))
                         except Exception as e:
                             print("auto redetect-resolve-relock: Failed to lock onto ROI "+str(final)+": "+str(e))
-        
-        
+                # 3R ATTEMPT -----------------------------------------------------------
+
+        # -----------------------------------------------------------
  
            
-       # list FPS and other pertinent informations
+           
+           
+           
+           
+    # POST CV PIPELINE ------------------------------------------
         fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
         if (only_draw_biggest_polygon): polset = "LargestPolygonOnly"
         else: polset = "AllPolygonsIncluded"
@@ -503,13 +518,15 @@ while latch:
             old_shape = camera_input.shape
             camera_input = cv2.resize(camera_input, (0,0), fx=compression, fy=compression) 
             d = pickle.dumps(camera_input)
+            # encode polygons and text
             text = pickle.dumps(encoded_text)
             shape = pickle.dumps(old_shape)
+            # transmit over socket
             net.sendTo("UDP", net.UDP_SOCKET, d + b"::::" + text + b"::::" + shape, net.TCP_REMOTE_PEER[0])
     # ----------------------------------------------
 
 
-    # WIRELESS NETWORKING LOGIC (control packets that are sent over the TCP signaling channel)
+    # WIRELESS NETWORKING/CMD LOGIC (control packets that are sent over the TCP signaling channel) ----------
     if cfg.enable_networking:
         command = net.readFrom("TCP", net.TCP_CONNECTION, 2048)
         if not command:
@@ -531,8 +548,13 @@ while latch:
             command = f"select {kb-48}"
         elif kb == ord("d"):
             updatePipeline()
-        
+       
+    # ---------------------------------------------------------------------------------------------------------
 
+
+
+
+    # ACT ON COMMAND FROM SOCKET OR KB -------------------------------------------------------------------------
     if command:
             try: multicmd = str(command, "ascii").split(";")
             except: multicmd = command.split(";")
