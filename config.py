@@ -1,43 +1,33 @@
-# NETWORKING SETTINGS:
-TCP_port = 10007                                    # TCP signaling channel port number
-UDP_port = 10009                                    # UDP data channel port number
-enable_networking = False                           # Whether or not to enable networking at all (for dev/debug only)
+# [NETWORKING]
+TCP_port = 10007                                    
+UDP_port = 10009                                    
+enable_networking = False                           
+checkip_command = "ifconfig"                        
+restart_command = "start python main.py"            
 
-checkip_command = "ifconfig"                        # On startup, this cmd will run and its result printed out in console
-                                                    # This should be your OS' network adapter info command, so you can see 
-                                                    # its current IP address.
+# [HARDWARE SOFTWARE INTERFACE]
+pin_config = {                                      
 
-restart_command = "start python main.py"            # What command to run if the remote tells the RPi to restart this program.
-
-# HARDWARE SOFTWARE INTERFACE SETTINGS:
-pin_config = {                                      # These control which pins on the RPi do what.
-    
 "leftPin": 18,
 "rightPin": 13,
 "yawPin": 12,
-"afterSpdCmdDelay": 0,                              # This should be set to 0, in order to make the pitch and yaw cmds nonblocking.
-"pulse_freq": 50,                                    # Pulse frequency, in hZ.
-"pinsToSet": "leftPin rightPin yawPin",             # DONT CHANGE THIS 
-
+"afterSpdCmdDelay": 0,                              
+"pulse_freq": 50,                                    
+"pinsToSet": "leftPin rightPin yawPin",             
 
 "revPin": 23,
 "firePin": 24,
 
 }
 
-enable_hsi = False                                  # Whether or not to enable the hardware-software interface (setting for developers
-                                                    # to be able to test on a non-RPi device)
+enable_hsi = False                                  
 
 
-
-# DISPLAY SETTINGS:
-show_local_output = False                           # Whether or not to display a video feed locally.
-
+# [LOCAL DISPLAY]
+show_local_output = False                           
 
 
-
-
-# COMPUTER VISION SETTINGS
+# [POTENTIAL TARGET DETECTION]
 ct2r_hue_lower_tolerance = 25
 ct2r_hue_upper_tolerance = 25
 ct2r_saturation_lower_tolerance = 69
@@ -48,7 +38,18 @@ ct2r_minpolyht = 40
 default_camera = 0
 
 
-# AUTO TARGET SETTINGS
+# [AUTO REDETECT/RESOLVE/RELOCK AFTER TRACKING FAIL]
+attempt_detect_resolve_relock = True
+attempt_drr_after = 15
+
+drr_require_neighbor = True
+
+drr_require_sizematch = True
+drr_sizematch_tolerance = 0.35
+
+
+
+# [AUTO AIM VIA SERVO]
 centering_tolerance = 50
 
 pitch_step =      1
@@ -57,7 +58,3 @@ yaw_high_step =   (85, 3)
 yaw_mid_step =    (45, 2.75)
 yaw_low_step =    (0, 1.3)
 
-
-# RELOCKER SETTINGS
-attempt_detect_resolve_relock = True
-attempt_drr_after = 15

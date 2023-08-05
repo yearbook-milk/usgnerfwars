@@ -114,7 +114,7 @@ the_tracker = None
 
 rescan_on_lockbreak = True
 failed_tracks = 0
-failed_tracks_thresh = 175
+failed_tracks_thresh = 1750
 rsfactor = 1.0
 compression = 0.15
 
@@ -290,7 +290,7 @@ while latch:
                 # now that we have a center point, we should calculate how much to turn the servo
                 screen_center = ( int(camera_input.shape[0] * 0.5), int(camera_input.shape[1] * 0.5) )
                 
-                # yaw check
+                # yaw and pitch check
                 try:
                     dx = abs(screen_center[0] - centerpoint[0])
                     dy = abs(screen_center[1] - centerpoint[1])
@@ -385,29 +385,59 @@ while latch:
                 print(f"{len(polygons)} detections in total,")
                 
                   
+                  
+                  
                 # RESOLUTION (this will pick out the detection that is closest to the thing, and only within the bounding box
                 the_bbox = None
-                old_bbox = helpers.resizeBox(last_success_box, 1.00)
+                old_bbox = helpers.resizeBox(last_success_box, 1.10)
                 camera_input = cv2.rectangle(camera_input, old_bbox, (100, 100, 0), 2)
                 acceptable = []
                 for i in polygons:
                     # first, check if the detection is a neighbor of the the original bbox
-                    if helpers.AtouchesB(i, old_bbox): acceptable.append(i)
-                print(f"{len(acceptable)} neighboring detections to be considered,")
+                    # if not, show it but draw it in red to show that it was rejected
+                    if helpers.AtouchesB(i, old_bbox) or not cfg.drr_require_neighbor:
+                        acceptable.append(i)
+                    else:
+                        cv2.rectangle(camera_input, i, (0, 0, 100), 2)
+                print(f"Of {len(polygons)} detections, {len(acceptable)} are neighboring will be considered,")
                 
-                for i in acceptable:
-                    # second, check see which detection is the closest to the original bbox
-                    camera_input = cv2.rectangle(camera_input, i, (0, 100, 0), 2)
-                    
-                cv2.imshow("dbg", camera_input)
+                if len(acceptable) > 0:
+                    acceptable_2 = []
+                    for i in acceptable:
+                        # second, throw out detections that are not about the same size of the original
+                        lower = (1 - cfg.drr_sizematch_tolerance)
+                        upper = (1 + cfg.drr_sizematch_tolerance)
+                        if ((last_success_box[2] * lower <= i[2] <= last_success_box[2] * upper) and (last_success_box[3] * lower <= i[3] <= last_success_box[3] * upper))  \
+                        or ((last_success_box[2] * lower <= i[3] <= last_success_box[2] * upper) and (last_success_box[3] * lower <= i[2] <= last_success_box[3] * upper))  \
+                        or (not cfg.drr_require_sizematch): \
+                            acceptable_2.append(i)
+                        else:
+                            cv2.rectangle(camera_input, i, (0, 0, 100), 2)
+                    print(f"Of {len(acceptable)} neighboring detections, {len(acceptable_2)} of approximately correct size profile will be considered,")    
+                    if len(acceptable_2) > 0:
+                        final = {}
+                        for i in acceptable_2:
+                            # draw detections
+                            camera_input = cv2.rectangle(camera_input, i, (0, 100, 100), 2)
+                            final[int((((last_success_box[0] - i[0]) ** 2) + ((last_success_box[1] - i[1]) ** 2)) ** 0.5)] = i
+                        print(f"Choosing from: {final}")
+                        final = final[min(list(final.keys()))]
+                        print(f"Finally selected: {final}")
+                        cv2.rectangle(camera_input, final, (0, 200, 0), 2)
+                        
+
+        
                 
-                    
-                    
-                    
-                
-                
-                # RELOCKING
-            
+                # RELOCKING (indented this way because it should only run when we get a final answer - if there are no detections for instance, we should do nothing)
+                        try:
+                            for i in trackers_inuse:
+                                i._init(last_successful_frame, final)
+                                print("auto redetect-resolve-relock: Initialized a tracker "+str(i))
+                            lock = "LOCK"
+                            failed_tracks = 0
+                            print("auto redetect-resolve-relock: Locked on subject with ROI "+str(final))
+                        except Exception as e:
+                            print("auto redetect-resolve-relock: Failed to lock onto ROI "+str(final)+": "+str(e))
         
         
  
@@ -466,7 +496,7 @@ while latch:
 
 
                 
-            
+        # either display the image or prepare it for transmission over socket
         if not cfg.enable_networking or cfg.show_local_output:
             cv2.imshow("output",camera_input)
         if cfg.enable_networking:
@@ -485,6 +515,7 @@ while latch:
         if not command:
             command = net.readFrom("UDP", net.UDP_SOCKET, 2048)
     else:
+        # if networking is off, we can sub in key presses for TCP/UDP packets containing the same instructions 
         kb = cv2.waitKey(1)
         if   kb == ord("f"):
             command = "dtoggle fire"

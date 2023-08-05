@@ -35,15 +35,15 @@ def center_of_bbox(inputbox):
     )
     return cp
 
-def AsubsetofB(a, b):
+def AentirelyinB(a, b):
     return (a[0] in range(b[0], b[0] + b[2]) and a[1] in range(b[1], b[1] + b[3]) and a[2] <= b[2] and a[3] <= b[3])
 
 def AtouchesB(a, b):
     return (
-        AsubsetofB((a[0],a[1],0,0), b) or
-        AsubsetofB((a[0],a[1]+a[3],0,0), b) or
-        AsubsetofB((a[0]+a[2],a[1],0,0), b) or
-        AsubsetofB((a[0]+a[2],a[1]+a[3],0,0), b)
+        AentirelyinB((a[0],a[1],0,0), b) or
+        AentirelyinB((a[0],a[1]+a[3],0,0), b) or
+        AentirelyinB((a[0]+a[2],a[1],0,0), b) or
+        AentirelyinB((a[0]+a[2],a[1]+a[3],0,0), b)
     )
 
 def resizeBox(inputbox, scale):
