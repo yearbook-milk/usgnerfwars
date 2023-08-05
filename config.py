@@ -1,4 +1,6 @@
-# [NETWORKING]
+# * = this setting is only applied on start up, and changing it/applying changes while main is running will have no fx
+
+# [NETWORKING] *
 TCP_port = 10007                                    
 UDP_port = 10009                                    
 enable_networking = False                           
@@ -6,7 +8,7 @@ checkip_command = "ifconfig"
 restart_command = "start python main.py"
 network_image_compression = 0.15
 
-# [HARDWARE SOFTWARE INTERFACE]
+# [HARDWARE SOFTWARE INTERFACE] *
 pin_config = {                                      
 
 "leftPin": 18,
@@ -24,7 +26,7 @@ pin_config = {
 enable_hsi = False                                  
 
 
-# [LOCAL DISPLAY]
+# [LOCAL DISPLAY] *
 show_local_output = False                           
 
 
