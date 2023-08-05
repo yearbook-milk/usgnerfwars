@@ -63,9 +63,15 @@ trackers_inuse = []
 filterdata = {}
 
 def updatePipeline():
+    # before we update the CV pipline we should also update cfg
     for i in [cfg, ct2r, am2r, cvbits_KCF, cvbits_KCF_75P, amt]:
         importlib.reload(i)
         print(f"RELOADER: reloaded {i}")
+        
+    global failed_tracks_thresh, rsfactor, compression
+    failed_tracks_thresh = cfg.failed_tracking_frames_thresh
+    rsfactor = cfg.image_resize_factor
+    compression = cfg.network_image_compression
         
     ct2r._init(
         lhs               = cfg.ct2r_hue_lower_tolerance,
@@ -111,13 +117,7 @@ only_draw_biggest_polygon = True
 
 lock = "SCAN"
 the_tracker = None
-
-rescan_on_lockbreak = True
 failed_tracks = 0
-failed_tracks_thresh = 1750
-rsfactor = 1.0
-compression = 0.15
-
 last_successful_frame = None
 last_success_box = None
 
@@ -365,7 +365,7 @@ while latch:
             
             
             # if the trackers were not able to detect anything
-            elif (not success) and (rescan_on_lockbreak):
+            elif (not success):
                 failed_tracks += 1
 
             # if the failed track frames have exceeded the unlock limit

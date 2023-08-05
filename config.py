@@ -3,7 +3,8 @@ TCP_port = 10007
 UDP_port = 10009                                    
 enable_networking = False                           
 checkip_command = "ifconfig"                        
-restart_command = "start python main.py"            
+restart_command = "start python main.py"
+network_image_compression = 0.15
 
 # [HARDWARE SOFTWARE INTERFACE]
 pin_config = {                                      
@@ -36,6 +37,9 @@ ct2r_minpolywidth = 40
 ct2r_minpolyht = 40
 
 default_camera = 0
+
+failed_tracking_frames_thresh = 1100
+image_resize_factor = 1.0
 
 
 # [AUTO REDETECT/RESOLVE/RELOCK AFTER TRACKING FAIL]
