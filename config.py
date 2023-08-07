@@ -3,7 +3,7 @@
 # [NETWORKING] *
 TCP_port = 10007                                    
 UDP_port = 10009                                    
-enable_networking = False                           
+enable_networking = True                           
 checkip_command = "ifconfig"                        
 restart_command = "start python main.py"
 network_image_compression = 0.15
@@ -53,8 +53,8 @@ neighbor_box_resize = 1.05
 min_neighbor_box_h = 160
 min_neighbor_box_w = 160
 
-drr_require_sizematch = False
-drr_sizematch_tolerance = 0.45
+drr_require_sizematch = True
+drr_sizematch_tolerance = 0.5
 
 
 

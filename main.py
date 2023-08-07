@@ -469,6 +469,8 @@ while latch:
                                 print("auto redetect-resolve-relock: Initialized a tracker "+str(i))
                             lock = "LOCK"
                             failed_tracks = 0
+                            vector_motion = (0,0)
+                            is_moving = False
                             print("auto redetect-resolve-relock: Locked on subject with ROI "+str(final))
                         except Exception as e:
                             print("auto redetect-resolve-relock: Failed to lock onto ROI "+str(final)+": "+str(e))
@@ -604,6 +606,8 @@ while latch:
                                 print("remote cmd: Initialized a tracker "+str(i))
                             lock = "LOCK"
                             failed_tracks = 0
+                            vector_motion = (0,0)
+                            is_moving = False
                             print("remote cmd: Locked on subject #"+str(kb)+" at the command of the remote.")
                         except Exception as e:
                             print("remote cmd: Failed to lock onto subject #"+str(kb)+": "+str(e))
