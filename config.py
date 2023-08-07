@@ -48,7 +48,7 @@ image_resize_factor = 1.0
 
 # [AUTO REDETECT/RESOLVE/RELOCK AFTER TRACKING FAIL]
 attempt_detect_resolve_relock = True
-attempt_drr_after = 1
+attempt_drr_after = 2
 
 drr_require_neighbor = True
 neighbor_box_resize = 1.05

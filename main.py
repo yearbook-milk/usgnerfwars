@@ -299,6 +299,7 @@ while latch:
                 h = int(h / successes)
                 box = (x, y, w, h)
                 last_success_box = box
+                keep_going = "STOP"
                 cv2.rectangle(camera_input, box, (0, 255, 255), 2)
                 camera_input = helpers.line(camera_input, "X=", int(box[0] + 0.5 * box[2]), (0,255,255))
                 camera_input = helpers.line(camera_input, "Y=", int(box[1] + 0.5 * box[3]), (0,255,255))
@@ -412,6 +413,53 @@ while latch:
             elif (not success):
                 failed_tracks += 1
 
+           
+            
+             # if the failed tracking frame was on one of the edges, we can turn the thing before declaring that we have lost the lock and starting 3R
+            if is_moving or keep_going != "STOP":   # we only start doing this if we know for a fact that the subject is moving around
+                if centerpoint[1] in range(0, 150) or keep_going == "LEFT":
+                   print("The target departed to the left of the frame")
+                   yaw -= cfg.yaw_mid_step[1]
+                   if (yaw < -90): 
+                       yaw = -90
+                       keep_going = "RIGHT"
+                   else: 
+                       #failed_tracks -= 1
+                       keep_going = "LEFT"
+                   sri.yaw(yaw)
+                elif centerpoint[1] in range(camera_input.shape[1] - 150, camera_input.shape[1]) or keep_going  == "RIGHT":
+                   print("The target departed to the right of the frame")
+                   yaw += cfg.yaw_mid_step[1]
+                   if (yaw > 90): 
+                       yaw = 90
+                       keep_going = "LEFT"
+                   else: 
+                       #failed_tracks -= 1
+                       keep_going = "RIGHT"
+                   sri.yaw(yaw)
+			   
+               """ if centerpoint[0] in range(0, 150) or keep_going  == "UP":
+                   print("The target departed to the top of the frame")
+                   pitch -= 1 
+                   if (pitch < -35): 
+                       pitch = -35
+                       keep_going = "STOP"
+                   else: 
+                       #failed_tracks -= 1
+                       keep_going = "UP"
+                   sri.pitch(pitch)
+                elif centerpoint[0] in range(camera_input.shape[0] - 150, camera_input.shape[0]) or keep_going  == "DOWN":
+                   print("The target departed to the bottom of the frame")
+                   pitch += 1
+                   if (pitch > 90): 
+                       pitch = 90
+                       keep_going = "STOP"
+                   else: 
+                       #failed_tracks -= 1
+                       keep_going = "DOWN"
+                   sri.pitch(pitch)
+	      """
+
             # if the failed track frames have exceeded the unlock limit
             if (failed_tracks >= failed_tracks_thresh):
                 the_tracker = None
@@ -487,6 +535,7 @@ while latch:
                             failed_tracks = 0
                             vector_motion = (0,0)
                             is_moving = False
+                            keep_going = "STOP"
                             print("auto redetect-resolve-relock: Locked on subject with ROI "+str(final))
                         except Exception as e:
                             print("auto redetect-resolve-relock: Failed to lock onto ROI "+str(final)+": "+str(e))
@@ -624,6 +673,7 @@ while latch:
                             failed_tracks = 0
                             vector_motion = (0,0)
                             is_moving = False
+                            keep_going = "STOP"
                             print("remote cmd: Locked on subject #"+str(kb)+" at the command of the remote.")
                         except Exception as e:
                             print("remote cmd: Failed to lock onto subject #"+str(kb)+": "+str(e))
