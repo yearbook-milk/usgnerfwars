@@ -3,7 +3,7 @@
 # [NETWORKING] *
 TCP_port = 10007                                    
 UDP_port = 10009                                    
-enable_networking = False                           
+enable_networking = True                           
 checkip_command = "ifconfig"                        
 restart_command = "start python main.py"
 network_image_compression = 0.15
@@ -25,7 +25,7 @@ pin_config = {
 
 }
 
-enable_hsi = False                                  
+enable_hsi = True                            
 
 
 # [LOCAL DISPLAY] *
@@ -35,7 +35,7 @@ show_local_output = False
 # [POTENTIAL TARGET DETECTION]
 ct2r_hue_lower_tolerance = 25
 ct2r_hue_upper_tolerance = 25
-ct2r_saturation_lower_tolerance = 69
+ct2r_saturation_lower_tolerance = 15
 ct2r_blur_level = 15
 ct2r_minpolywidth = 40
 ct2r_minpolyht = 40
@@ -55,10 +55,10 @@ neighbor_box_resize = 1.05
 min_neighbor_box_h = 160
 min_neighbor_box_w = 160
 
-drr_require_sizematch = True
-drr_sizematch_tolerance = 0.35
+drr_require_sizematch = False
+drr_sizematch_tolerance = 0.65
 
-
+drr_resolve_using = "SIZE"
 
 
 

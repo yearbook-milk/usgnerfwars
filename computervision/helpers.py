@@ -39,14 +39,25 @@ def AentirelyinB(a, b):
     return (a[0] in range(b[0], b[0] + b[2]) and a[1] in range(b[1], b[1] + b[3]) and a[2] <= b[2] and a[3] <= b[3])
 
 def AtouchesB(a, b):
-    return (
+    if (
         AentirelyinB((a[0],a[1],0,0), b) or
         AentirelyinB((a[0],a[1]+a[3],0,0), b) or
         AentirelyinB((a[0]+a[2],a[1],0,0), b) or
         AentirelyinB((a[0]+a[2],a[1]+a[3],0,0), b) or
         AentirelyinB(b, a) or 
         AentirelyinB(a, b)
-    )
+    ):
+        return True
+    else:
+        for i in range(a[0], a[0] + a[2]):
+            if AentirelyinB( (i, a[1], 0, 0), b): return True
+            if AentirelyinB( (i, a[1] + a[3], 0, 0), b): return True
+        for i in range(a[1], a[1] + a[3]):
+            if AentirelyinB( (a[0], i, 0, 0), b): return True
+            if AentirelyinB( (a[0] + a[2], i, 0, 0), b): return True
+
+    return False
+
 
 def resizeBox(inputbox, scale):
     #print(inputbox)

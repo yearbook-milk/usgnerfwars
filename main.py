@@ -468,7 +468,8 @@ while latch:
                         for i in acceptable_2:
                             # draw detections
                             camera_input = cv2.rectangle(camera_input, i, (0, 100, 100), 2)
-                            final[int((((last_success_box[0] - i[0]) ** 2) + ((last_success_box[1] - i[1]) ** 2)) ** 0.5)] = i
+                            if cfg.drr_resolve_using == "DIST":  final[int((((last_success_box[0] - i[0]) ** 2) + ((last_success_box[1] - i[1]) ** 2)) ** 0.5)] = i
+                            if cfg.drr_resolve_using == "SIZE":  final[abs((i[0] * i[1]) - (last_success_box[0] * last_success_box[1]))] = i
                         #print(f"Choosing from: {final}")
                         final = final[min(list(final.keys()))]
                         print(f"Finally selected: {final}")
