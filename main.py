@@ -118,6 +118,10 @@ the_tracker = None
 failed_tracks = 0
 last_successful_frame = None
 last_success_box = None
+last_successful_tracks = []
+is_moving = False
+vector_motion = (0,0)
+mag = 0
 
 encoded_text     = []
 # (x,y,color,scale,content)
@@ -365,6 +369,25 @@ while latch:
                     camera_input = cv2.rectangle(camera_input, (screen_center[1] - cfg.centering_tolerance, screen_center[0] - cfg.centering_tolerance), (screen_center[1] + cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance), (255,0,255), 2 )
                     
                 
+                    # check if the target is moving or not
+                    last_successful_tracks.append(centerpoint)
+                    if len(last_successful_tracks) > 3:
+                        last_successful_tracks.pop(0)
+                        
+                        
+                    motionframes = 0    
+                    if len(last_successful_tracks) > 1:
+                        for i in range(1, len(last_successful_tracks)):
+                            if (((last_successful_tracks[i][0] - last_successful_tracks[i-1][0]) ** 2) + ((last_successful_tracks[i][1] - last_successful_tracks[i-1][1]) ** 2)) > 5:
+                                motionframes += 1
+                                
+                    vector_motion = (last_successful_tracks[-1][0] - last_successful_tracks[0][0], last_successful_tracks[-1][1] - last_successful_tracks[0][1])
+                    #cv2.line(camera_input, (last_successful_tracks[0][1], last_successful_tracks[0][0]), (last_successful_tracks[-1][1], last_successful_tracks[-1][0]), (0, 255, 0), thickness=3, lineType=8)
+                    cv2.arrowedLine(camera_input, (centerpoint[1], centerpoint[0]), (centerpoint[1] + vector_motion[1], centerpoint[0] + vector_motion[0]), (0, 0, 0), thickness=3)
+
+                    mag = round(((vector_motion[0] ** 2) + (vector_motion[1] ** 2)) ** 0.5, 2) 
+                    is_moving = mag >= cfg.motion_vector_min_mvmt_mag
+                
                 except ZeroDivisionError:
                     print("ZeroDivisionError while attempting to move target to center using servos...")
         # IF SUCCESSFUL TRACK  --------------------------------------------
@@ -398,8 +421,10 @@ while latch:
                   
                 # RESOLUTION (this will pick out the detection that is closest to the thing, and only within the bounding box
                 the_bbox = None
-                old_bbox = helpers.resizeBox(last_success_box, 1.50)
-                camera_input = cv2.rectangle(camera_input, old_bbox, (100, 100, 0), 2)
+                old_bbox = helpers.resizeBox(last_success_box, cfg.neighbor_box_resize)
+                if old_bbox[2] < cfg.min_neighbor_box_w: old_bbox = (old_bbox[0], old_bbox[1], cfg.min_neighbor_box_w, old_bbox[3])
+                if old_bbox[3] < cfg.min_neighbor_box_w: old_bbox = (old_bbox[0], old_bbox[1], old_bbox[2], cfg.min_neighbor_box_h)
+                camera_input = cv2.rectangle(camera_input, old_bbox, (100,0,0), 2)                
                 acceptable = []
                 for i in polygons:
                     # first, check if the detection is a neighbor of the the original bbox
@@ -458,8 +483,8 @@ while latch:
            
     # POST CV PIPELINE ------------------------------------------
         fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
-        if (only_draw_biggest_polygon): polset = "LargestPolygonOnly"
-        else: polset = "AllPolygonsIncluded"
+        if (only_draw_biggest_polygon): polset = "LPONLY"
+        else: polset = "ALL"
 
         if not cfg.enable_networking:
             cv2.putText(
@@ -472,7 +497,7 @@ while latch:
             )
             cv2.putText(
                 camera_input,
-                f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""".replace("\n", ""),
+                f"""AUTOLOCK: {lock} {polset} {'MVMT' if is_moving else 'STILL'}:{vector_motion} |{mag}| {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs """.replace("\n", ""),
                 (5,55),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.50,
@@ -504,7 +529,7 @@ while latch:
             )
         else:
             encoded_text.append( [5, 35, (0, 100, 100), 0.35, f"""CAMERA: {fps}fps  cam#{device}""" ] )
-            encoded_text.append( [5, 45, (100, 100, 0), 0.35, f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""" ] )
+            encoded_text.append( [5, 45, (100, 100, 0), 0.35, f"""AUTOLOCK: {lock} {polset} {'MVMT' if is_moving else 'STILL'}:{vector_motion} |{mag}| {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""" ] )
             encoded_text.append( [5, 55, (0, 0, 255), 0.35, f"""CONNECTIVITY: ENABLED [self]:{cfg.TCP_port}<=>{net.TCP_REMOTE_PEER[0]}:{net.TCP_REMOTE_PEER[1]}""" ] )
             encoded_text.append( [5, 65, (0, 0, 0), 0.35, f"""SYSTEM: {pitch}deg pitch  {yaw}deg yaw""" ] )
 

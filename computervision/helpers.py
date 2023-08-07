@@ -44,7 +44,8 @@ def AtouchesB(a, b):
         AentirelyinB((a[0],a[1]+a[3],0,0), b) or
         AentirelyinB((a[0]+a[2],a[1],0,0), b) or
         AentirelyinB((a[0]+a[2],a[1]+a[3],0,0), b) or
-        AentirelyinB(b, a)
+        AentirelyinB(b, a) or 
+        AentirelyinB(a, b)
     )
 
 def resizeBox(inputbox, scale):

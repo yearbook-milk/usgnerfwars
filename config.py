@@ -40,7 +40,7 @@ ct2r_minpolyht = 40
 
 default_camera = 0
 
-failed_tracking_frames_thresh = 1100
+failed_tracking_frames_thresh = 1010
 image_resize_factor = 1.0
 
 
@@ -49,9 +49,12 @@ attempt_detect_resolve_relock = True
 attempt_drr_after = 1
 
 drr_require_neighbor = True
+neighbor_box_resize = 1.05
+min_neighbor_box_h = 160
+min_neighbor_box_w = 160
 
 drr_require_sizematch = False
-drr_sizematch_tolerance = 0.35
+drr_sizematch_tolerance = 0.45
 
 
 
@@ -65,6 +68,8 @@ pitch_step =      1
 yaw_high_step =   (85, 3)
 yaw_mid_step =    (45, 2.75)
 yaw_low_step =    (0, 1.3)
+
+motion_vector_min_mvmt_mag = 8.5
 
 yaw_exit_frame_detection = True
 yaw_exit_frames_thresh = 5
