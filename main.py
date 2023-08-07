@@ -125,7 +125,7 @@ lock = "SCAN"
 the_tracker = None
 failed_tracks = 0
 last_successful_frame = None
-last_success_box = None
+last_success_boxes = []
 last_successful_tracks = []
 is_moving = False
 vector_motion = (0,0)
@@ -381,6 +381,10 @@ while latch:
                     last_successful_tracks.append(centerpoint)
                     if len(last_successful_tracks) > 3:
                         last_successful_tracks.pop(0)
+
+                    last_success_boxes.append(box)
+                    if len(last_success_boxes) > 25:
+                        last_success_boxes.pop(0)
                         
                         
                     motionframes = 0    
@@ -429,21 +433,22 @@ while latch:
                   
                 # RESOLUTION (this will pick out the detection that is closest to the thing, and only within the bounding box
                 the_bbox = None
-                old_bbox = helpers.resizeBox(last_success_box, cfg.neighbor_box_resize)
-                if old_bbox[2] < cfg.min_neighbor_box_w: old_bbox = (old_bbox[0], old_bbox[1], cfg.min_neighbor_box_w, old_bbox[3])
-                if old_bbox[3] < cfg.min_neighbor_box_w: old_bbox = (old_bbox[0], old_bbox[1], old_bbox[2], cfg.min_neighbor_box_h)
-                camera_input = cv2.rectangle(camera_input, old_bbox, (100,0,0), 2)                
+                
                 acceptable = []
-                for ob in last_successful_tracks:
-                    
-		for i in polygons:
-                    # first, check if the detection is a neighbor of the the original bbox
-                    # if not, show it but draw it in red to show that it was rejected
-                    if helpers.AtouchesB(i, old_bbox) or not cfg.drr_require_neighbor:
-                        acceptable.append(i)
-                    else:
-                        cv2.rectangle(camera_input, i, (0, 0, 100), 2)
-                #print(f"Of {len(polygons)} detections, {len(acceptable)} are neighboring will be considered,")
+                for old_bbox in last_success_boxes:
+                    old_bbox = helpers.resizeBox(old_bbox, cfg.neighbor_box_resize)
+                    if old_bbox[2] < cfg.min_neighbor_box_w: old_bbox = (old_bbox[0], old_bbox[1], cfg.min_neighbor_box_w, old_bbox[3])
+                    if old_bbox[3] < cfg.min_neighbor_box_w: old_bbox = (old_bbox[0], old_bbox[1], old_bbox[2], cfg.min_neighbor_box_h)
+                    camera_input = cv2.rectangle(camera_input, old_bbox, (100,0,0), 2)
+                
+                    for i in polygons:
+                        # first, check if the detection is a neighbor of the the original bbox
+                        # if not, show it but draw it in red to show that it was rejected
+                        if helpers.AtouchesB(i, old_bbox) or not cfg.drr_require_neighbor:
+                            if i not in acceptable: acceptable.append(i)
+                        else:
+                            cv2.rectangle(camera_input, i, (0, 0, 100), 2)
+                    #print(f"Of {len(polygons)} detections, {len(acceptable)} are neighboring will be considered,")
                 
                 if len(acceptable) > 0:
                     acceptable_2 = []
