@@ -3,10 +3,12 @@
 # [NETWORKING] *
 TCP_port = 10007                                    
 UDP_port = 10009                                    
-enable_networking = True                           
+enable_networking = False                           
 checkip_command = "ifconfig"                        
 restart_command = "start python main.py"
 network_image_compression = 0.15
+
+
 
 # [HARDWARE SOFTWARE INTERFACE] *
 pin_config = {                                      

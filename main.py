@@ -61,6 +61,12 @@ trackers_inuse = []
 filterdata = {}
 
 def updatePipeline():
+    global the_tracker, lock, failed_tracks
+    the_tracker = None
+    lock = "SCAN"
+    failed_tracks = 0
+    print("updatePipeline: lock released automatically in order to update pipeline...")
+    
     # before we update the CV pipline we should also update cfg
     for i in [cfg, ct2r, am2r, cvbits_KCF, cvbits_KCF_75P, amt]:
         importlib.reload(i)
@@ -70,6 +76,8 @@ def updatePipeline():
     failed_tracks_thresh = cfg.failed_tracking_frames_thresh
     rsfactor = cfg.image_resize_factor
     compression = cfg.network_image_compression
+    
+
         
     ct2r._init(
         lhs               = cfg.ct2r_hue_lower_tolerance,
