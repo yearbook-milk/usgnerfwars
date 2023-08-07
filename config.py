@@ -46,12 +46,14 @@ image_resize_factor = 1.0
 
 # [AUTO REDETECT/RESOLVE/RELOCK AFTER TRACKING FAIL]
 attempt_detect_resolve_relock = True
-attempt_drr_after = 15
+attempt_drr_after = 1
 
 drr_require_neighbor = True
 
-drr_require_sizematch = True
+drr_require_sizematch = False
 drr_sizematch_tolerance = 0.35
+
+
 
 
 
@@ -63,4 +65,7 @@ pitch_step =      1
 yaw_high_step =   (85, 3)
 yaw_mid_step =    (45, 2.75)
 yaw_low_step =    (0, 1.3)
+
+yaw_exit_frame_detection = True
+yaw_exit_frames_thresh = 5
 

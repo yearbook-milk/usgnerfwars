@@ -302,7 +302,6 @@ while latch:
                     dy = abs(screen_center[1] - centerpoint[1])
                     cax = (dx / centerpoint[0]) * 90
            
-                    print(cax * 0.01)
                     if ( \
                         True and centerpoint[0] not in range(screen_center[0] - cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance)  \
                     ):
@@ -392,14 +391,14 @@ while latch:
                 polygons = []
                 for i in inuse:
                     polygons += i._attempt_detection(camera_input, filterdata)[0]
-                print(f"{len(polygons)} detections in total,")
+                #print(f"{len(polygons)} detections in total,")
                 
                   
                   
                   
                 # RESOLUTION (this will pick out the detection that is closest to the thing, and only within the bounding box
                 the_bbox = None
-                old_bbox = helpers.resizeBox(last_success_box, 1.10)
+                old_bbox = helpers.resizeBox(last_success_box, 1.50)
                 camera_input = cv2.rectangle(camera_input, old_bbox, (100, 100, 0), 2)
                 acceptable = []
                 for i in polygons:
@@ -409,7 +408,7 @@ while latch:
                         acceptable.append(i)
                     else:
                         cv2.rectangle(camera_input, i, (0, 0, 100), 2)
-                print(f"Of {len(polygons)} detections, {len(acceptable)} are neighboring will be considered,")
+                #print(f"Of {len(polygons)} detections, {len(acceptable)} are neighboring will be considered,")
                 
                 if len(acceptable) > 0:
                     acceptable_2 = []
@@ -423,14 +422,14 @@ while latch:
                             acceptable_2.append(i)
                         else:
                             cv2.rectangle(camera_input, i, (0, 0, 100), 2)
-                    print(f"Of {len(acceptable)} neighboring detections, {len(acceptable_2)} of approximately correct size profile will be considered,")    
+                    #print(f"Of {len(acceptable)} neighboring detections, {len(acceptable_2)} of approximately correct size profile will be considered,")    
                     if len(acceptable_2) > 0:
                         final = {}
                         for i in acceptable_2:
                             # draw detections
                             camera_input = cv2.rectangle(camera_input, i, (0, 100, 100), 2)
                             final[int((((last_success_box[0] - i[0]) ** 2) + ((last_success_box[1] - i[1]) ** 2)) ** 0.5)] = i
-                        print(f"Choosing from: {final}")
+                        #print(f"Choosing from: {final}")
                         final = final[min(list(final.keys()))]
                         print(f"Finally selected: {final}")
                         cv2.rectangle(camera_input, final, (0, 200, 0), 2)
