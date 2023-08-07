@@ -3,7 +3,7 @@
 # [NETWORKING] *
 TCP_port = 10007                                    
 UDP_port = 10009                                    
-enable_networking = False                           
+enable_networking = True                           
 checkip_command = "ifconfig"                        
 restart_command = "start python main.py"
 network_image_compression = 0.15
@@ -25,7 +25,7 @@ pin_config = {
 
 }
 
-enable_hsi = False                                  
+enable_hsi = True                                  
 
 
 # [LOCAL DISPLAY] *
@@ -56,7 +56,7 @@ min_neighbor_box_h = 160
 min_neighbor_box_w = 160
 
 drr_require_sizematch = True
-drr_sizematch_tolerance = 0.5
+drr_sizematch_tolerance = 0.35
 
 
 
@@ -67,8 +67,8 @@ centering_tolerance = 50
 
 pitch_step =      1
 
-yaw_high_step =   (85, 3)
-yaw_mid_step =    (45, 2.75)
+yaw_high_step =   (85, 2.5)
+yaw_mid_step =    (45, 2)
 yaw_low_step =    (0, 1.3)
 
 motion_vector_min_mvmt_mag = 8.5

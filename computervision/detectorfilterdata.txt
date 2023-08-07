@@ -1,1 +1,1 @@
-{"colormasks": ct2r.colorMasksGenerator("light_blue dark_blue")}
+{"colormasks": ct2r.colorMasksGenerator("red orange yellow")}

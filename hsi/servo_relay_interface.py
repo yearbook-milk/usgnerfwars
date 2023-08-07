@@ -30,8 +30,8 @@ def legacy_angle_to_percent(angle):
     return start + angle_as_percent
 
 def angle_to_pulse_width(angle):
-    print(500 + ( (2500-500) * float(angle) / 180) )  
-    #return 500 + ( (2500-500) * float(angle) / 180)
+    #print(500 + ( (2500-500) * float(angle) / 180) )  
+    return 500 + ( (2500-500) * float(angle) / 180)
 
 def centerAllAxes():
     global pwmL, pwmR, config, pwmP, pwm

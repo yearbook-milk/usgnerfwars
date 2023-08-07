@@ -434,7 +434,9 @@ while latch:
                 if old_bbox[3] < cfg.min_neighbor_box_w: old_bbox = (old_bbox[0], old_bbox[1], old_bbox[2], cfg.min_neighbor_box_h)
                 camera_input = cv2.rectangle(camera_input, old_bbox, (100,0,0), 2)                
                 acceptable = []
-                for i in polygons:
+                for ob in last_successful_tracks:
+                    
+		for i in polygons:
                     # first, check if the detection is a neighbor of the the original bbox
                     # if not, show it but draw it in red to show that it was rejected
                     if helpers.AtouchesB(i, old_bbox) or not cfg.drr_require_neighbor:
