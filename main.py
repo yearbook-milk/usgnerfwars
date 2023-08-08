@@ -130,6 +130,7 @@ last_successful_tracks = []
 is_moving = False
 vector_motion = (0,0)
 mag = 0
+keep_going = "STOP"
 
 encoded_text     = []
 # (x,y,color,scale,content)
@@ -416,29 +417,52 @@ while latch:
            
             
              # if the failed tracking frame was on one of the edges, we can turn the thing before declaring that we have lost the lock and starting 3R
-            if is_moving or keep_going != "STOP":   # we only start doing this if we know for a fact that the subject is moving around
-                if centerpoint[1] in range(0, 150) or keep_going == "LEFT":
+            if (cfg.yaw_exit_frame_detection) and (is_moving) and (keep_going == "STOP"):   # we only start doing this if we know for a fact that the subject is moving around
+                if (cfg.yaw_exit_frame_detect_by_vector and vector_motion[1] < -15) or (cfg.yaw_exit_frame_detect_by_position and centerpoint[1] in range(0, 50)):
                    print("The target departed to the left of the frame")
                    yaw -= cfg.yaw_mid_step[1]
                    if (yaw < -90): 
                        yaw = -90
-                       keep_going = "RIGHT"
                    else: 
                        #failed_tracks -= 1
                        keep_going = "LEFT"
-                   sri.yaw(yaw)
-                elif centerpoint[1] in range(camera_input.shape[1] - 150, camera_input.shape[1]) or keep_going  == "RIGHT":
+                       print("Correcting by turning to the left...")
+                   if cfg.enable_hsi: sri.yaw(yaw)
+                elif (cfg.yaw_exit_frame_detect_by_vector and vector_motion[1] > 15) or \
+                     (cfg.yaw_exit_frame_detect_by_position and centerpoint[1] in range(camera_input.shape[1] - 100, camera_input.shape[1])):
                    print("The target departed to the right of the frame")
                    yaw += cfg.yaw_mid_step[1]
                    if (yaw > 90): 
                        yaw = 90
-                       keep_going = "LEFT"
                    else: 
                        #failed_tracks -= 1
                        keep_going = "RIGHT"
-                   sri.yaw(yaw)
+                       print("Correcting by turning to the right...")
+                   if cfg.enable_hsi: sri.yaw(yaw)
+
+
+            if (keep_going != "STOP"):
+                if keep_going == "LEFT":
+                   print("Continuing to turn to the left...")
+                   yaw -= cfg.yaw_mid_step[1]
+                   if (yaw < -90): 
+                       yaw = -90
+                       keep_going = "RIGHT" if cfg.yaw_exit_frame_continuesweep else "STOP"
+                   else: 
+                       keep_going = "LEFT"
+                   if cfg.enable_hsi: sri.yaw(yaw)
+                elif keep_going  == "RIGHT":
+                   print("Continuing to turn to the right...")
+                   yaw += cfg.yaw_mid_step[1]
+                   if (yaw > 90): 
+                       yaw = 90
+                       keep_going = "LEFT" if cfg.yaw_exit_frame_continuesweep else "STOP"
+                   else: 
+                       keep_going = "RIGHT"
+                   if cfg.enable_hsi: sri.yaw(yaw)
+
 			   
-               """ if centerpoint[0] in range(0, 150) or keep_going  == "UP":
+                """ if centerpoint[0] in range(0, 150) or keep_going  == "UP":
                    print("The target departed to the top of the frame")
                    pitch -= 1 
                    if (pitch < -35): 
@@ -447,7 +471,7 @@ while latch:
                    else: 
                        #failed_tracks -= 1
                        keep_going = "UP"
-                   sri.pitch(pitch)
+                   if cfg.enable_hsi: sri.pitch(pitch)
                 elif centerpoint[0] in range(camera_input.shape[0] - 150, camera_input.shape[0]) or keep_going  == "DOWN":
                    print("The target departed to the bottom of the frame")
                    pitch += 1
@@ -457,7 +481,7 @@ while latch:
                    else: 
                        #failed_tracks -= 1
                        keep_going = "DOWN"
-                   sri.pitch(pitch)
+                   if cfg.enable_hsi: sri.pitch(pitch)
 	      """
 
             # if the failed track frames have exceeded the unlock limit
@@ -564,7 +588,7 @@ while latch:
             )
             cv2.putText(
                 camera_input,
-                f"""AUTOLOCK: {lock} {polset} {'MVMT' if is_moving else 'STILL'}:{vector_motion} |{mag}| {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs """.replace("\n", ""),
+                f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs """.replace("\n", ""),
                 (5,55),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.50,
@@ -588,7 +612,15 @@ while latch:
             )
             cv2.putText(
                 camera_input,
-                f"""KB: [F]ire [R]ev, [Q]uit, LP[O] [U]nlock Reloa[D]PL [0-9]Select""".replace("\n", ""),
+                f"""KB: [F]ire  [R]ev  [Q]uit  LP[O]  [U]nlock  [D] Reload PL  [0-9]Select""".replace("\n", ""),
+                (5,135),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.50,
+                (100,100,100)
+            )
+            cv2.putText(
+                camera_input,
+                f"""CORRECTIONS: {'MVMT' if is_moving else 'STILL'} vec:{vector_motion} |vec|:{mag} frmdepart:{keep_going}""".replace("\n", ""),
                 (5,115),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.50,
@@ -596,9 +628,11 @@ while latch:
             )
         else:
             encoded_text.append( [5, 35, (0, 100, 100), 0.35, f"""CAMERA: {fps}fps  cam#{device}""" ] )
-            encoded_text.append( [5, 45, (100, 100, 0), 0.35, f"""AUTOLOCK: {lock} {polset} {'MVMT' if is_moving else 'STILL'}:{vector_motion} |{mag}| {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""" ] )
-            encoded_text.append( [5, 55, (0, 0, 255), 0.35, f"""CONNECTIVITY: ENABLED [self]:{cfg.TCP_port}<=>{net.TCP_REMOTE_PEER[0]}:{net.TCP_REMOTE_PEER[1]}""" ] )
-            encoded_text.append( [5, 65, (0, 0, 0), 0.35, f"""SYSTEM: {pitch}deg pitch  {yaw}deg yaw""" ] )
+            encoded_text.append( [5, 45, (100, 100, 0), 0.35, f"""AUTOLOCK: {lock} {polset} {len(polygons)}d {failed_tracks}/{failed_tracks_thresh}ftfs""" ] )
+            encoded_text.append( [5, 55, (0, 0, 255), 0.35, f"""CONNECTIVITY: ENABLED (TCP: [self]:{cfg.TCP_port}<=>{net.TCP_REMOTE_PEER[0]}:{net.TCP_REMOTE_PEER[1]})""" ] )
+            encoded_text.append( [5, 65, (0, 0, 0), 0.35, f"""SERVO: {pitch}deg pitch  {yaw}deg yaw""" ] )
+            encoded_text.append( [5, 75, (0, 100, 0), 0.35, f"""CORRECTIONS: {'MVMT' if is_moving else 'STILL'} vec:{vector_motion} |vec|:{mag} frmdepart:{keep_going}""" ] )
+
 
 
                 
