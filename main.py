@@ -328,8 +328,8 @@ while latch:
                             print(f"target is above the centerline by {dy}px")
                             pitch -= cfg.pitch_step
 
-                        if (pitch > 90): pitch = 90
-                        if (pitch < -35): pitch = -35
+                        if (pitch > cfg.pin_config['pitch_limits'][1]): pitch = cfg.pin_config['pitch_limits'][1]
+                        if (pitch < cfg.pin_config['pitch_limits'][0]): pitch = cfg.pin_config['pitch_limits'][0]
 
 
                     if ( \
@@ -349,8 +349,8 @@ while latch:
                                 
 
                         
-                        if (yaw > 90): yaw = 90
-                        if (yaw < -90): yaw = -90
+                        if (yaw > cfg.pin_config['yaw_limits'][1]): yaw = cfg.pin_config['yaw_limits'][1]
+                        if (yaw < cfg.pin_config['yaw_limits'][0]): yaw = cfg.pin_config['yaw_limits'][0]
                         
 
                     if cfg.enable_hsi:
@@ -421,8 +421,8 @@ while latch:
                 if (cfg.yaw_exit_frame_detect_by_vector and vector_motion[1] < -15) or (cfg.yaw_exit_frame_detect_by_position and centerpoint[1] in range(0, 50)):
                    print("The target departed to the left of the frame")
                    yaw -= cfg.yaw_mid_step[1]
-                   if (yaw < -90): 
-                       yaw = -90
+                   if (yaw < cfg.pin_config['yaw_limits'][0]): 
+                       yaw = cfg.pin_config['yaw_limits'][0]
                    else: 
                        #failed_tracks -= 1
                        keep_going = "LEFT"
@@ -432,8 +432,8 @@ while latch:
                      (cfg.yaw_exit_frame_detect_by_position and centerpoint[1] in range(camera_input.shape[1] - 100, camera_input.shape[1])):
                    print("The target departed to the right of the frame")
                    yaw += cfg.yaw_mid_step[1]
-                   if (yaw > 90): 
-                       yaw = 90
+                   if (yaw > cfg.pin_config['yaw_limits'][1]): 
+                       yaw = cfg.pin_config['yaw_limits'][1]
                    else: 
                        #failed_tracks -= 1
                        keep_going = "RIGHT"
@@ -445,8 +445,8 @@ while latch:
                 if keep_going == "LEFT":
                    print("Continuing to turn to the left...")
                    yaw -= cfg.yaw_mid_step[1]
-                   if (yaw < -90): 
-                       yaw = -90
+                   if (yaw < cfg.pin_config['yaw_limits'][0]): 
+                       yaw = cfg.pin_config['yaw_limits'][0]
                        keep_going = "RIGHT" if cfg.yaw_exit_frame_continuesweep else "STOP"
                    else: 
                        keep_going = "LEFT"
@@ -454,8 +454,8 @@ while latch:
                 elif keep_going  == "RIGHT":
                    print("Continuing to turn to the right...")
                    yaw += cfg.yaw_mid_step[1]
-                   if (yaw > 90): 
-                       yaw = 90
+                   if (yaw > cfg.pin_config['yaw_limits'][1]): 
+                       yaw = cfg.pin_config['yaw_limits'][1]
                        keep_going = "LEFT" if cfg.yaw_exit_frame_continuesweep else "STOP"
                    else: 
                        keep_going = "RIGHT"

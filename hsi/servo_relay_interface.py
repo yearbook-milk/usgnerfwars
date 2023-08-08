@@ -16,6 +16,8 @@ config = {
 "pulse_freq": 50,
 "pinsToSet": "leftPin rightPin yawPin"    
 
+"yaw_limits": (-90, 90),
+"pitch_limits": (-35, 90),
 }
 
 rev = False
@@ -42,7 +44,7 @@ def centerAllAxes():
 
 def pitch(angle):
     global pwmL, pwmR, config, pwmP, pwm
-    assert (-35 <= angle <= 90)
+    assert (config["pitch_limits"][0] <= angle <= config["pitch_limits"][1])
     angle += 90
     pwm.set_servo_pulsewidth( config["leftPin"], angle_to_pulse_width(angle) )
     pwm.set_servo_pulsewidth( config["rightPin"], angle_to_pulse_width(180 - angle) )
@@ -50,7 +52,7 @@ def pitch(angle):
     
 def yaw(angle):
     global pwmL, pwmR, config, pwmP, pwm
-    assert (-90 <= angle <= 90)
+    assert (config["yaw_limits"][0] <= angle <= config["yaw_limits"][1])
     angle += 90
     pwm.set_servo_pulsewidth( config["yawPin"], angle_to_pulse_width(angle) )
     time.sleep(config["afterSpdCmdDelay"])

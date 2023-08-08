@@ -23,7 +23,11 @@ pin_config = {
 "revPin": 23,
 "firePin": 24,
 
+"yaw_limits": (-90, 90),
+"pitch_limits": (-35, 90),
 }
+
+
 
 enable_hsi = False                            
 
