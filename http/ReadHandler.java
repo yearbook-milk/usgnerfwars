@@ -21,6 +21,8 @@ public class ReadHandler implements HttpHandler {
     public void handle(HttpExchange t) throws IOException {
       System.out.println("---- New request! ----");
 
+		File f;
+
       try {
 		t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");  
 		  
@@ -30,7 +32,7 @@ public class ReadHandler implements HttpHandler {
         // assuming that this file is on the list that is allowed to be exposed.
 
         String[] components = t.getRequestURI().toString().split("/");
-        String[] acceptable = {"detectorfilterdata.txt", "detectorpipeline.txt", "tracker.txt", "doc.txt"};
+        String[] acceptable = {"detectorfilterdata.txt", "detectorpipeline.txt", "tracker.txt", "doc.txt", ",config.py"};
         boolean pass = false;
         for (String filename : acceptable) {
           if (filename.equals(components[2])) {
@@ -41,11 +43,16 @@ public class ReadHandler implements HttpHandler {
           Helper.reply_over_HTTP(t, 403, "403: Access denied");
         } else {
           // Send the reply using roHTTP
-          File f = new File("../computervision/" + components[2]);
+		  if (components[2].substring(0,1).equals(",")) {
+			f = new File("../" + components[2].substring(1));
+		  } else {
+			f = new File("../computervision/" + components[2]);
+		  }
           Scanner fr = new Scanner(f);
           String output = "";
           while (fr.hasNextLine()) {
             output += fr.nextLine();
+			output += "\n";
           }
           fr.close();
           Helper.reply_over_HTTP(t, 200, output);

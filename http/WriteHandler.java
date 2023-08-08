@@ -19,6 +19,8 @@ import org.json.simple.parser.ParseException;
 public class WriteHandler implements HttpHandler {
     public void handle(HttpExchange t) throws IOException {
       System.out.println("---- New request! ----");
+	  
+	  FileWriter f;
 
       try {
 		  
@@ -40,7 +42,7 @@ public class WriteHandler implements HttpHandler {
 		System.out.println("Req. body: "+post_body.toString());
 
         String[] components = t.getRequestURI().toString().split("/");
-        String[] acceptable = {"detectorfilterdata.txt", "detectorpipeline.txt", "tracker.txt"};
+        String[] acceptable = {"detectorfilterdata.txt", "detectorpipeline.txt", "tracker.txt", ",config.py"};
         boolean pass = false;
         for (String filename : acceptable) {
           if (filename.equals(components[2])) {
@@ -51,7 +53,11 @@ public class WriteHandler implements HttpHandler {
           Helper.reply_over_HTTP(t, 403, "403: Write access denied");
         } else {
           // Send the reply using roHTTP
-          FileWriter f = new FileWriter("../computervision/" + components[2]);
+		  if (components[2].substring(0,1).equals(",")) {
+			f = new FileWriter("../" + components[2].substring(1));
+		  } else {
+			f = new FileWriter("../computervision/" + components[2]);
+		  }
           f.write(post_body.toString());
           f.close();
           Helper.reply_over_HTTP(t, 200, post_body.toString());
