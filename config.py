@@ -71,11 +71,11 @@ drr_resolve_using = "SIZE"
 # [AUTO AIM VIA SERVO]
 centering_tolerance = 50
 
-pitch_step =      1
+pitch_step =      0.75
 
-yaw_high_step =   (120, 2.5)
-yaw_mid_step =    (85, 2)
-yaw_low_step =    (0, 0.43)
+yaw_high_step =   (140, -3.15)
+yaw_mid_step =    (100, -1.45)
+yaw_low_step =    (0, -0.75)
 
 motion_vector_min_mvmt_mag = 8.5
 
