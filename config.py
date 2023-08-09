@@ -3,7 +3,7 @@
 # * = this setting is only applied on start up, and changing it/applying changes while main is running will have no fx
 
 # [NETWORKING] *
-TCP_port = 10007                                    
+TCP_port = 10008                                    
 UDP_port = 10009                                    
 enable_networking = True                           
 checkip_command = "ifconfig"                        
@@ -39,10 +39,10 @@ show_local_output = False
 
 
 # [POTENTIAL TARGET DETECTION]
-ct2r_hue_lower_tolerance = 25
-ct2r_hue_upper_tolerance = 25
+ct2r_hue_lower_tolerance = 10
+ct2r_hue_upper_tolerance = 10
 ct2r_saturation_lower_tolerance = 15
-ct2r_blur_level = 15
+ct2r_blur_level = 25
 ct2r_minpolywidth = 40
 ct2r_minpolyht = 40
 
@@ -69,13 +69,13 @@ drr_resolve_using = "SIZE"
 
 
 # [AUTO AIM VIA SERVO]
-centering_tolerance = 50
+centering_tolerance = 55
 
 pitch_step =      0.75
 
-yaw_high_step =   (140, -3.15)
-yaw_mid_step =    (100, -1.45)
-yaw_low_step =    (0, -0.75)
+yaw_high_step =   (120, -3.15)
+yaw_mid_step =    (64, -1.25)
+yaw_low_step =    (0, -0.71)
 
 motion_vector_min_mvmt_mag = 8.5
 

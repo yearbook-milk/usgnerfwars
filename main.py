@@ -314,7 +314,8 @@ while latch:
                 try:
                     dx = abs(screen_center[0] - centerpoint[0])
                     dy = abs(screen_center[1] - centerpoint[1])
-                    cax = (dx / centerpoint[0]) * 90
+                    cax = (dx / centerpoint[0]) * 30
+                    cyx = (dy / centerpoint[1]) * 30
            
                     if ( \
                         True and centerpoint[0] not in range(screen_center[0] - cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance)  \
@@ -354,9 +355,12 @@ while latch:
                         
 
                     if cfg.enable_hsi:
+                        #if (yaw > cfg.pin_config['yaw_limits'][1]): yaw = cfg.pin_config['yaw_limits'][1]
+                        #if (yaw < cfg.pin_config['yaw_limits'][0]): yaw = cfg.pin_config['yaw_limits'][0]
+                        
                         #sri.pitch(pitch)
                         #sri.yaw(yaw)
-                        #print(cax, cyx)
+                        #print(cax *0.15, cyx *0.15)
                         
                         #pitch += float(0.05 * cyx)
                         #if (pitch > +90): pitch = +90
@@ -364,9 +368,12 @@ while latch:
                         
                         #if centerpoint[1] not in range(screen_center[1] - cfg.centering_tolerance, screen_center[1] + cfg.centering_tolerance):
                         #    if centerpoint[1] > screen_center[1]:
-                        #        yaw  += 0.01 * cax
+                        #        yaw  -= 0.05 * cax
                         #    if centerpoint[1] < screen_center[1]:
-                        #        yaw  -= 0.01 * cax
+                        #        yaw  += 0.05 * cyx#
+
+                        #if (yaw > cfg.pin_config['yaw_limits'][1]): yaw = cfg.pin_config['yaw_limits'][1]
+                        #if (yaw < cfg.pin_config['yaw_limits'][0]): yaw = cfg.pin_config['yaw_limits'][0]
                         #if (yaw > 90): yaw = +90
                         #if (yaw < 90): yaw = -90
                         
