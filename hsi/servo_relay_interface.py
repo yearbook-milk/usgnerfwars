@@ -14,7 +14,7 @@ config = {
 
 "afterSpdCmdDelay": 0,
 "pulse_freq": 50,
-"pinsToSet": "leftPin rightPin yawPin"    
+"pinsToSet": "leftPin rightPin yawPin",
 
 "yaw_limits": (-90, 90),
 "pitch_limits": (-35, 90),
@@ -94,7 +94,7 @@ def __shutdown():
     for i in config["pinsToSet"].split(" "):
         pwm.set_PWM_dutycycle( config[i], 0 )
     global fire, rev
-    if fire: toggleFire()
-    
+    pitch(+15)
+    if fire: toggleFire()    
     if rev: toggleRev()
 

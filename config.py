@@ -1,9 +1,11 @@
+
+
 # * = this setting is only applied on start up, and changing it/applying changes while main is running will have no fx
 
 # [NETWORKING] *
 TCP_port = 10007                                    
 UDP_port = 10009                                    
-enable_networking = False                           
+enable_networking = True                           
 checkip_command = "ifconfig"                        
 restart_command = "start python main.py"
 network_image_compression = 0.15
@@ -24,12 +26,12 @@ pin_config = {
 "firePin": 24,
 
 "yaw_limits": (-90, 90),
-"pitch_limits": (-35, 90),
+"pitch_limits": (-30, 30),
 }
 
 
 
-enable_hsi = False                            
+enable_hsi = True                            
 
 
 # [LOCAL DISPLAY] *
@@ -71,13 +73,13 @@ centering_tolerance = 50
 
 pitch_step =      1
 
-yaw_high_step =   (85, 2.5)
-yaw_mid_step =    (45, 2)
-yaw_low_step =    (0, 1.3)
+yaw_high_step =   (120, 2.5)
+yaw_mid_step =    (85, 2)
+yaw_low_step =    (0, 0.43)
 
 motion_vector_min_mvmt_mag = 8.5
 
 yaw_exit_frame_detection = True
 yaw_exit_frame_continuesweep = False
-yaw_exit_frame_detect_by_vector = True
+yaw_exit_frame_detect_by_vector = False
 yaw_exit_frame_detect_by_position = True
