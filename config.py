@@ -47,6 +47,7 @@ ct2r_minpolywidth = 70
 ct2r_minpolyht = 70
 ct2r_maxpolywidth = 120
 ct2r_maxpolyht = 240
+ct2r_min_hsv_value = 150
 
 default_camera = 0
 

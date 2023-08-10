@@ -1,4 +1,3 @@
-
 print("Starting up...")
 import cv2
 import numpy                         as np
@@ -88,6 +87,7 @@ def updatePipeline():
         lminPolygonHeight = cfg.ct2r_minpolyht,
         lmaxPolygonWidth  = cfg.ct2r_maxpolywidth,
         lmaxPolygonHeight = cfg.ct2r_maxpolyht
+        lminval           = cfg.ct2r_min_hsv_value 
     )
     am2r._init()
 
