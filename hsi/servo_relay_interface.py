@@ -43,6 +43,7 @@ def centerAllAxes():
 
 
 def pitch(angle):
+    angle *= -1
     global pwmL, pwmR, config, pwmP, pwm
     assert (config["pitch_limits"][0] <= angle <= config["pitch_limits"][1])
     angle += 90
@@ -51,6 +52,7 @@ def pitch(angle):
     time.sleep(config["afterSpdCmdDelay"])
     
 def yaw(angle):
+    angle *= -1
     global pwmL, pwmR, config, pwmP, pwm
     assert (config["yaw_limits"][0] <= angle <= config["yaw_limits"][1])
     angle += 90
