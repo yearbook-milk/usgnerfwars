@@ -17,42 +17,51 @@ hs = 0
 ha = 0
 ss = 0
 blur = 0
+
+minval = 0
+
 minPolygonWidth = 0
 minPolygonHeight = 0
 
+maxPolygonWidth = 0
+maxPolygonHeight = 0
+
 # hs is for lower hue leniency, ha is for upper hue leniency, ss is for desaturation tolerance, blur is for how
 # much blur to apply to remove noise (more blur = less noise but also worse detections far away
-def _init(lhs = hs, lha = ha, lss = ss, lblur = blur, lminPolygonWidth = minPolygonWidth, lminPolygonHeight = minPolygonHeight):
-    global colors, available_colors, hs, ha, ss, blur, minPolygonHeight, minPolygonWidth
+def _init(lhs = hs, lha = ha, lss = ss, lminval = minval, lblur = blur, lminPolygonWidth = minPolygonWidth, lminPolygonHeight = minPolygonHeight, lmaxPolygonWidth = maxPolygonWidth, lmaxPolygonHeight = maxPolygonHeight):
+    global colors, available_colors, hs, ha, ss, blur, minPolygonHeight, minPolygonWidth, maxPolygonWidth, maxPolygonHeight
     hs = lhs
     ha = lha
     ss = lss
+    minval = lminval
     blur = lblur
     minPolygonWidth = lminPolygonWidth
     minPolygonHeight = lminPolygonHeight
+    maxPolygonWidth = lmaxPolygonWidth
+    maxPolygonHeight = lmaxPolygonHeight
     # helper constants i got from https://cppsecrets.com/users/252310097107115104971051159911111110864103109971051084699111109/DETECTION-OF-COLOR-OF-AN-IMAGE-USING-OpenCV.php
     """colors["lower_black"] = [0,0,0] 
     colors["upper_black"] = [50,50,100] 
     colors["lower_white"] = [0,0,0] 
     colors["upper_white"] = [0,0,255]"""
-    colors["lower_red"] = [0,150-ss,50] 
-    colors["upper_red"] = [10+ha,255,255] 
-    colors["lower_green"] = [45-hs,150-ss,50] 
-    colors["upper_green"] = [65+ha,255,255] 
-    colors["lower_yellow"] = [25-hs,150-ss,50] 
-    colors["upper_yellow"] = [35+ha,255,255] 
-    colors["lower_light_blue"] = [95-hs,150-ss,0] 
+    colors["lower_red"] =        [0,150-ss,minval] 
+    colors["upper_red"] =        [10+ha,255,255] 
+    colors["lower_green"] =      [45-hs,150-ss,minval] 
+    colors["upper_green"] =      [65+ha,255,255] 
+    colors["lower_yellow"] =     [25-hs,150-ss,minval] 
+    colors["upper_yellow"] =     [35+ha,255,255] 
+    colors["lower_light_blue"] = [95-hs,150-ss,minval] 
     colors["upper_light_blue"] = [110+ha,255,255] 
-    colors["lower_orange"] = [15-hs,150-ss,0] 
-    colors["upper_orange"] = [25+ha,255,255] 
-    colors["lower_dark_pink"] = [160-hs,150-ss,0] 
-    colors["upper_dark_pink"] = [170+ha,255,255] 
-    colors["lower_pink"] = [145-hs,150-ss,0]
-    colors["upper_pink"] = [155+ha,255,255] 
-    colors["lower_cyan"] = [85-hs,150-ss,0] 
-    colors["upper_cyan"] = [95+ha,255,255] 
-    colors["lower_dark_blue"] = [115-hs,150-ss,0] 
-    colors["upper_dark_blue"] = [125+ha,255,255]
+    colors["lower_orange"] =     [15-hs,150-ss,minval] 
+    colors["upper_orange"] =     [25+ha,255,255] 
+    colors["lower_dark_pink"] =  [160-hs,150-ss,minval] 
+    colors["upper_dark_pink"] =  [170+ha,255,255] 
+    colors["lower_pink"] =       [145-hs,150-ss,minval]
+    colors["upper_pink"] =       [155+ha,255,255] 
+    colors["lower_cyan"] =       [85-hs,150-ss,minval] 
+    colors["upper_cyan"] =       [95+ha,255,255] 
+    colors["lower_dark_blue"] =  [115-hs,150-ss,minval] 
+    colors["upper_dark_blue"] =  [125+ha,255,255]
 
 def colorMasksGenerator(names):
     global available_colors
@@ -96,7 +105,7 @@ def _attempt_detection(image, filterdata):
     # FOURTH STEP IN THIS PIPELINE: COMPILE AND RETURN THE BOUNDING BOXES FOR THESE COUNTOURS
     for c in contours:
         x,y,w,h = cv2.boundingRect(c)
-        if (w > minPolygonWidth and h > minPolygonHeight):
+        if (w > minPolygonWidth and h > minPolygonHeight) and (w < maxPolygonWidth and h < maxPolygonHeight):
             cv2.rectangle(output, (x,y), (x+w,y+h), (255, 0, 0), 2)
             polygons.append( (x, y, w, h) )
     

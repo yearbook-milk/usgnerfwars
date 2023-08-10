@@ -43,7 +43,7 @@ def centerAllAxes():
 
 
 def pitch(angle):
-    angle *= -1
+    angle *= 1
     global pwmL, pwmR, config, pwmP, pwm
     assert (config["pitch_limits"][0] <= angle <= config["pitch_limits"][1])
     angle += 90
@@ -95,8 +95,8 @@ def __shutdown():
     #Close GPIO & cleanup
     for i in config["pinsToSet"].split(" "):
         pwm.set_PWM_dutycycle( config[i], 0 )
+        pwm.write(config[i], pigpio.LOW)
     global fire, rev
-    pitch(+15)
     if fire: toggleFire()    
     if rev: toggleRev()
 

@@ -85,7 +85,9 @@ def updatePipeline():
         lss               = cfg.ct2r_saturation_lower_tolerance,
         lblur             = cfg.ct2r_blur_level,
         lminPolygonWidth  = cfg.ct2r_minpolywidth,
-        lminPolygonHeight = cfg.ct2r_minpolyht
+        lminPolygonHeight = cfg.ct2r_minpolyht,
+        lmaxPolygonWidth  = cfg.ct2r_maxpolywidth,
+        lmaxPolygonHeight = cfg.ct2r_maxpolyht
     )
     am2r._init()
 
@@ -308,7 +310,7 @@ while latch:
                 # if the polygon is being tracked, draw in yellow
                 failed_tracks = 0
                 # now that we have a center point, we should calculate how much to turn the servo
-                screen_center = ( int(camera_input.shape[0] * 0.5), int(camera_input.shape[1] * 0.5) )
+                screen_center = ( int(camera_input.shape[0] * 0.5)+10, int(camera_input.shape[1] * 0.5) )
                 
                 # yaw and pitch check
                 try:
