@@ -5,7 +5,7 @@
 # [NETWORKING] *
 TCP_port = 10008                                    
 UDP_port = 10009                                    
-enable_networking = True                           
+enable_networking = False                           
 checkip_command = "ifconfig"                        
 restart_command = "start python main.py"
 network_image_compression = 0.15
@@ -31,7 +31,7 @@ pin_config = {
 
 
 
-enable_hsi = True                            
+enable_hsi = False                            
 
 
 # [LOCAL DISPLAY] *
@@ -65,17 +65,26 @@ drr_require_sizematch = False
 drr_sizematch_tolerance = 0.65
 
 drr_resolve_using = "SIZE"
+assert drr_resolve_using == "SIZE" or drr_resolve_using == "DIST"
 
 
 
 # [AUTO AIM VIA SERVO]
 centering_tolerance = 55
 
-pitch_step =      0.75
 
-yaw_high_step =   (120, -3.15)
-yaw_mid_step =    (64, -1.25)
-yaw_low_step =    (0, -0.71)
+centering_method = "RATIO"
+assert centering_method == "STEP" or centering_method == "RATIO"
+
+yaw_high_step =   (120, 3.15)
+yaw_mid_step =    (64, 1.25)
+yaw_low_step =    (0, 0.71)
+pitch_high_step =   (120, 3.15)
+pitch_mid_step =    (64, 1.25)
+pitch_low_step =    (0, 0.71)
+
+yaw_to_edge_of_frame_deg = 15
+pitch_to_edge_of_frame_deg = 15
 
 motion_vector_min_mvmt_mag = 8.5
 

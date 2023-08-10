@@ -312,71 +312,95 @@ while latch:
                 
                 # yaw and pitch check
                 try:
-                    dx = abs(screen_center[0] - centerpoint[0])
-                    dy = abs(screen_center[1] - centerpoint[1])
-                    cax = (dx / centerpoint[0]) * 30
-                    cyx = (dy / centerpoint[1]) * 30
+                    dy = abs(screen_center[0] - centerpoint[0])
+                    dx = abs(screen_center[1] - centerpoint[1])
+                    dry = (dy / screen_center[0]) * cfg.pitch_to_edge_of_frame_deg
+                    drx = (dx / screen_center[1]) * cfg.yaw_to_edge_of_frame_deg
+                    #print(f"({screen_center[1]} - {centerpoint[1]}  ={dx}) / {screen_center[1]}")
+                    #print(dry, drx)
            
                     if ( \
                         True and centerpoint[0] not in range(screen_center[0] - cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance)  \
                     ):
 
                         if centerpoint[0] > screen_center[0]:
-                            print(f"target is below the centerline by {dy}px")
-                            pitch += cfg.pitch_step
-                               
+                            print(f"target below the centerline {dy}px")
+                            if cfg.centering_method == "STEP":
+                                if dy > cfg.pitch_high_step[0]:
+                                    pitch -= cfg.pitch_high_step[1]
+                                    print("high step down")
+                                elif dy > cfg.pitch_mid_step[0]:
+                                    pitch -= cfg.pitch_mid_step[1]
+                                    print("mid step down")
+                                else:
+                                    pitch -= cfg.pitch_low_step[1]
+                                    print("low step down")
+                            elif cfg.centering_method == "RATIO":
+                                pitch -= dry
+                                print("turning down", dry)
+                                
+                            
                         if centerpoint[0] < screen_center[0]:
-                            print(f"target is above the centerline by {dy}px")
-                            pitch -= cfg.pitch_step
-
-                        if (pitch > cfg.pin_config['pitch_limits'][1]): pitch = cfg.pin_config['pitch_limits'][1]
-                        if (pitch < cfg.pin_config['pitch_limits'][0]): pitch = cfg.pin_config['pitch_limits'][0]
-
+                            print(f"target is above the centerline {dy}px")
+                            if cfg.centering_method == "STEP":
+                                if dy > cfg.pitch_high_step[0]:
+                                    pitch += cfg.yaw_high_step[1]
+                                    print("high step up")
+                                elif dy > cfg.pitch_mid_step[0]:
+                                    pitch += cfg.pitch_mid_step[1]
+                                    print("mid step up")
+                                else:
+                                    pitch += cfg.yaw_low_step[1]
+                                    print("low step up")
+                            elif cfg.centering_method == "RATIO":
+                                pitch += dry
+                                print("turning up", dry)
 
                     if ( \
                         True and centerpoint[1] not in range(screen_center[1] - cfg.centering_tolerance, screen_center[1] + cfg.centering_tolerance)  \
                     ):
                         if centerpoint[1] > screen_center[1]:
                             print(f"target is to the right of centerline {dx}px")
-                            if dx > cfg.yaw_high_step[0]: yaw += cfg.yaw_high_step[1]
-                            elif dx > cfg.yaw_mid_step[0]: yaw += cfg.yaw_mid_step[1]
-                            else: yaw += cfg.yaw_low_step[1]
+                            if cfg.centering_method == "STEP":
+                                if dx > cfg.yaw_high_step[0]:
+                                    yaw += cfg.yaw_high_step[1]
+                                    print("high step right")
+                                elif dx > cfg.yaw_mid_step[0]:
+                                    yaw += cfg.yaw_mid_step[1]
+                                    print("mid step right")
+                                else:
+                                    yaw += cfg.yaw_low_step[1]
+                                    print("low step right")
+                            elif cfg.centering_method == "RATIO":
+                                yaw += drx
+                                print("turning right",drx)
                             
                         if centerpoint[1] < screen_center[1]:
                             print(f"target is to the left of centerline {dx}px")
-                            if dx > cfg.yaw_high_step[0]: yaw -= cfg.yaw_high_step[1]
-                            elif dx > cfg.yaw_mid_step[0]: yaw -= cfg.yaw_mid_step[1]
-                            else: yaw -= cfg.yaw_low_step[1]
+                            if cfg.centering_method == "STEP":
+                                if dx > cfg.yaw_high_step[0]:
+                                    yaw -= cfg.yaw_high_step[1]
+                                    print("high step left")
+                                elif dx > cfg.yaw_mid_step[0]:
+                                    yaw -= cfg.yaw_mid_step[1]
+                                    print("mid step left")
+                                else:
+                                    yaw -= cfg.yaw_low_step[1]
+                                    print("low step left")
+                            elif cfg.centering_method == "RATIO":
+                                yaw -= drx
+                                print("turning left", drx)
                                 
 
                         
-                        if (yaw > cfg.pin_config['yaw_limits'][1]): yaw = cfg.pin_config['yaw_limits'][1]
-                        if (yaw < cfg.pin_config['yaw_limits'][0]): yaw = cfg.pin_config['yaw_limits'][0]
-                        
+                    if (yaw > cfg.pin_config['yaw_limits'][1]): yaw = cfg.pin_config['yaw_limits'][1]
+                    if (yaw < cfg.pin_config['yaw_limits'][0]): yaw = cfg.pin_config['yaw_limits'][0]
+                    if (pitch > cfg.pin_config['pitch_limits'][1]): pitch = cfg.pin_config['pitch_limits'][1]
+                    if (pitch < cfg.pin_config['pitch_limits'][0]): pitch = cfg.pin_config['pitch_limits'][0]
 
-                    if cfg.enable_hsi:
-                        #if (yaw > cfg.pin_config['yaw_limits'][1]): yaw = cfg.pin_config['yaw_limits'][1]
-                        #if (yaw < cfg.pin_config['yaw_limits'][0]): yaw = cfg.pin_config['yaw_limits'][0]
-                        
-                        #sri.pitch(pitch)
-                        #sri.yaw(yaw)
-                        #print(cax *0.15, cyx *0.15)
-                        
-                        #pitch += float(0.05 * cyx)
-                        #if (pitch > +90): pitch = +90
-                        #if (pitch < -35): pitch = -35
-                        
-                        #if centerpoint[1] not in range(screen_center[1] - cfg.centering_tolerance, screen_center[1] + cfg.centering_tolerance):
-                        #    if centerpoint[1] > screen_center[1]:
-                        #        yaw  -= 0.05 * cax
-                        #    if centerpoint[1] < screen_center[1]:
-                        #        yaw  += 0.05 * cyx#
 
-                        #if (yaw > cfg.pin_config['yaw_limits'][1]): yaw = cfg.pin_config['yaw_limits'][1]
-                        #if (yaw < cfg.pin_config['yaw_limits'][0]): yaw = cfg.pin_config['yaw_limits'][0]
-                        #if (yaw > 90): yaw = +90
-                        #if (yaw < 90): yaw = -90
-                        
+
+                    if cfg.enable_hsi:        
                         sri.pitch(pitch)
                         sri.yaw(yaw)
                         pass
