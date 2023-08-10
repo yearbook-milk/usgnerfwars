@@ -41,7 +41,7 @@ show_local_output = False
 # [POTENTIAL TARGET DETECTION]
 ct2r_hue_lower_tolerance = 10
 ct2r_hue_upper_tolerance = 10
-ct2r_saturation_lower_tolerance = 5
+ct2r_saturation_lower_tolerance = 10
 ct2r_blur_level = 25
 ct2r_minpolywidth = 70
 ct2r_minpolyht = 70
@@ -95,3 +95,7 @@ yaw_exit_frame_detection = True
 yaw_exit_frame_continuesweep = False
 yaw_exit_frame_detect_by_vector = False
 yaw_exit_frame_detect_by_position = True
+
+
+# FIRE CONTROL
+max_seconds_rev = 5

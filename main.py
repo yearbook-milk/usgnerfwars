@@ -5,6 +5,8 @@ import sys
 import os
 import pickle
 import importlib
+from multiprocessing import Process
+from time import sleep
 
 sys.path.append(os.path.abspath("computervision"))
 sys.path.append(os.path.abspath("hsi"))
@@ -760,11 +762,30 @@ while latch:
                         reason = 1
                     elif command[0] == "dtoggle" and cfg.enable_hsi:
                         if command[1] == "fire":
-                            sri.toggleFire()
+                            if not sri.rev: 
+                                def fireseq():
+                                   if not sri.rev: sri.toggleRev()
+                                   sleep(1)
+                                   if not sri.fire: sri.toggleFire()
+                                   sleep(1.5)
+                                   if sri.rev: sri.toggleRev()
+                                   if sri.fire: sri.toggleFire()
+                                proc = Process(target=fireseq)
+                                proc.start()
+                                proc.join()
+                            elif sri.rev: sri.toggleFire()
                             print("remote cmd: dtoggle fire")
                         elif command[1] == "rev":
                             sri.toggleRev()
                             print("remote cmd: dtoggle rev")
+                            def shutOff():
+                                sleep(cfg.max_seconds_rev)
+                                if sri.rev: sri.toggleRev()
+                                if sri.fire: sri.toggleFire()
+                            proc = Process(target=shutOff)
+                            proc.start()
+                            proc.join()
+
                         
                 
                 except (ValueError, KeyError, IndexError) as e:
@@ -784,6 +805,7 @@ while latch:
                     while net.TCP_CONNECTION.recv(65535): pass
                 except:
                     pass
+
     # -------------------------------------------
 
 
