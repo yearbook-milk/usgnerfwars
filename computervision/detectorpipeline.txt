@@ -1,1 +1,1 @@
-[color_detect,aruco_marker_detect]
+[aruco_marker_detect]

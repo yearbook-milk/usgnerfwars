@@ -1,1 +1,1 @@
-[cvbuiltin_kcf_tracker]
+[aruco_marker_track]

@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import helpers
 
 """
 Tracker Module Interface:
@@ -17,6 +18,13 @@ def _init(frame, ROI, dicti = cv2.aruco.DICT_4X4_250):
     dictionary = cv2.aruco.getPredefinedDictionary(dicti)
     parameters =  cv2.aruco.DetectorParameters()
     aruco_detector = cv2.aruco.ArucoDetector(dictionary, parameters)
+    global aruco_id
+    newROI = helpers.resizeBox(ROI, 1.20)
+    corners, ids, _ = aruco_detector.detectMarkers(frame)
+    if len(ids) > 0:
+        aruco_id = ids[0][0]
+        print(f"Just locked onto an aruco marker with ID {ids[0][0]}")
+    
     
 def _update(frame):
     global aruco_id, aruco_detector
