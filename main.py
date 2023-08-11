@@ -16,19 +16,10 @@ os.chdir(os.path.abspath("computervision"))
 
 print(f"-- PATH variable: {sys.path}")
 
-import color_track_return_rectangle  as ct2r
-import aruco_marker_return_rectangle as am2r
 
-import cvbuiltin_kcf_tracker         as cvbits_KCF
-import cvbuiltin_kcf_tracker_75      as cvbits_KCF_75P
-import cvbuiltin_csrt_tracker        as cvbits_CSRT
-import cvbuiltin_csrt_tracker_75     as cvbits_CSRT_75P
-import aruco_marker_tracker          as amt
-
-import helpers
 
 import config                        as cfg
-
+import helpers
 
 
 print("-- Imports complete!")
@@ -62,16 +53,25 @@ trackers_inuse = []
 filterdata = {}
 
 def updatePipeline():
-    global the_tracker, lock, failed_tracks
+    print("Starting a reload of the CV pipeline...")
+    global the_tracker, lock, failed_tracks, cvmodules
     the_tracker = None
     lock = "SCAN"
     failed_tracks = 0
-    print("updatePipeline: lock released automatically in order to update pipeline...")
+    print("-- updatePipeline: lock released automatically in order to update pipeline...")
     
     # before we update the CV pipline we should also update cfg
-    for i in [cfg, ct2r, am2r, cvbits_KCF, cvbits_KCF_75P, amt]:
-        importlib.reload(i)
-        print(f"RELOADER: reloaded {i}")
+
+    cvmodules = {}
+    for i in os.listdir():
+        if i.endswith(".py"):
+            cvmodules[i.split(".")[0]] = __import__(i.split(".")[0])
+    print("LOADER: Loaded these computer vision modules: " + str(cvmodules).replace(",","\n"))
+
+
+    for i in cvmodules:
+        importlib.reload(cvmodules[i])
+        print(f"-- RELOADER: reloaded {cvmodules[i]}")
         
     global failed_tracks_thresh, rsfactor, compression
     failed_tracks_thresh = cfg.failed_tracking_frames_thresh
@@ -79,39 +79,17 @@ def updatePipeline():
     compression = cfg.network_image_compression
     
 
-        
-    ct2r._init(
-        lhs               = cfg.ct2r_hue_lower_tolerance,
-        lha               = cfg.ct2r_hue_upper_tolerance,
-        lss               = cfg.ct2r_saturation_lower_tolerance,
-        lblur             = cfg.ct2r_blur_level,
-        lminPolygonWidth  = cfg.ct2r_minpolywidth,
-        lminPolygonHeight = cfg.ct2r_minpolyht,
-        lmaxPolygonWidth  = cfg.ct2r_maxpolywidth,
-        lmaxPolygonHeight = cfg.ct2r_maxpolyht,
-        lminval           = cfg.ct2r_min_hsv_value 
-    )
-    am2r._init()
 
 
     global inuse, filterdata, trackers_inuse
-    inuse = eval(helpers.file_get_contents("detectorpipeline.txt"), {
-        "ct2r": ct2r,
-        "am2r": am2r,
-    })
-    filterdata = eval(helpers.file_get_contents("detectorfilterdata.txt"), {
-        "ct2r": ct2r,
-        "am2r": am2r,
-    })
-    trackers_inuse = eval(helpers.file_get_contents("tracker.txt"), {
-        "cvbits_KCF": cvbits_KCF,
-        "cvbits_KCF_75P": cvbits_KCF_75P,
-        "cvbits_CSRT": cvbits_CSRT,
-        "cvbits_CSRT_75P": cvbits_CSRT_75P,
-        "amt": amt
-    })
+    inuse = eval(helpers.file_get_contents("detectorpipeline.txt"), cvmodules)
+    for i in inuse:
+        print("-- Detector setup: "+str(i))
+        i._init(cvmodules)
+    filterdata = eval(helpers.file_get_contents("detectorfilterdata.txt"), cvmodules)
+    trackers_inuse = eval(helpers.file_get_contents("tracker.txt"), cvmodules)
     
-    print(f"-- OK! Detection pipeline reconfigured. Using detectors {inuse} \n\n with input data {filterdata}. \n\n Tracker: {trackers_inuse}\n\n")
+    print(f"OK! Detection pipeline reconfigured. Using detectors {inuse} \n\n with input data {filterdata}. \n\n Tracker: {trackers_inuse}\n\n")
 
 updatePipeline()
 # ----------------------------------------
@@ -209,8 +187,6 @@ while latch:
     if (ret):
         camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor)
         camera_input = helpers.increase_brightness(camera_input, value=10)
-        #cv2.imshow("input", camera_input)
-
         # get polygons back out of the detection method if we are scanning
         polygons = []
         for i in inuse:

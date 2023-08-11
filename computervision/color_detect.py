@@ -2,18 +2,21 @@ import cv2
 import numpy as np
 import helpers
 
-"""
-Detector Module Interface:
-
-* _init              (*argv)                                          -> <bool> indicating success or failure to start up the tracker
-* _attempt_detection (ndarray img, dict filterdata)                   -> <list> with polygons of detections (x, y, w, h) format and a <ndarray> with the resultant image
-* _attempt_lock      (ndarray img, event, x, y, list polygons, *argv) -> <dict> with information that will be reinserted into filterdata
-
-PIPELINE 2: COLOR TRACKER
-"""
-
 colors = {}
 available_colors = "black white red green yellow light_blue orange dark_pink pink cyan dark_blue".split(" ")
+
+# hs is for how much a certain pixel can deviate from the specified color range, in HSV deg, in the negative direction
+# ha is for how much a certain pixel can deviate from the specified color range, in HSV deg, in the positive direction
+# ss is for the mininum saturation of a pixel, in HSV
+# minval is for the mininum value/brightness level of a pixel, in HSV
+
+# blur controls how much blur to apply to remove noise and potential false positives
+
+# the last four variables control the min and max detection size (i.e. if you're tracking blue but the walls are blue, 
+# you can set a max limit to prevent the whole wall from being seen as a detection
+
+# these variables however SHOULD be loaded from a config file and not hardcoded
+ 
 hs = 0
 ha = 0
 ss = 0
@@ -28,10 +31,9 @@ maxPolygonWidth = 0
 maxPolygonHeight = 0
 
 
-# hs is for lower hue leniency, ha is for upper hue leniency, ss is for desaturation tolerance, blur is for how
-# much blur to apply to remove noise (more blur = less noise but also worse detections far away
 def _init(other_modules):
     global colors, available_colors, hs, ha, ss, blur, minPolygonHeight, minPolygonWidth, maxPolygonWidth, maxPolygonHeight
+    
     # helper constants i got from https://cppsecrets.com/users/252310097107115104971051159911111110864103109971051084699111109/DETECTION-OF-COLOR-OF-AN-IMAGE-USING-OpenCV.php
     f = eval(helpers.file_get_contents("detectorfilterdata.txt"), other_modules)
     hs = f["color_detect"]["other_parameters"]["lower_hue_tolerance"]
@@ -44,6 +46,7 @@ def _init(other_modules):
     maxPolygonWidth = f["color_detect"]["other_parameters"]["maxPolygonWidth"]
     maxPolygonHeight = f["color_detect"]["other_parameters"]["maxPolygonHeight"]
 
+    # adjust the color masks to the tolerances acc. to the global variables
     """colors["lower_black"] = [0,0,0] 
     colors["upper_black"] = [50,50,100] 
     colors["lower_white"] = [0,0,0] 
@@ -67,6 +70,7 @@ def _init(other_modules):
     colors["lower_dark_blue"] =  [115-hs,ss,minval] 
     colors["upper_dark_blue"] =  [125+ha,255,255]
 
+
 def colorMasksGenerator(names):
     try:
         global available_colors
@@ -77,6 +81,8 @@ def colorMasksGenerator(names):
     except:
         print("Error on generating colormasks! Did you run _init() at least once?")
         return []
+        
+        
 def _attempt_detection(image, filterdata):
     try:
         colormasks = filterdata["color_detect"]["colormasks"]
@@ -88,7 +94,7 @@ def _attempt_detection(image, filterdata):
     output = np.zeros((height,width,3), np.uint8)
     polygons = []
     
-    # FIRST STEP IN THIS PIPELINE: APPLY COLOR MASKS
+    # FIRST STEP: APPLY COLOR MASKS
     for i in colormasks:
         global colors, available_colors, blur, minPolygonHeight, minPolygonWidth
         

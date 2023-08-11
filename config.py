@@ -5,7 +5,7 @@
 # [NETWORKING] *
 TCP_port = 10008                                    
 UDP_port = 10009                                    
-enable_networking = True                           
+enable_networking = False                           
 checkip_command = "ifconfig"                        
 restart_command = "start python main.py"
 network_image_compression = 0.15
@@ -31,7 +31,7 @@ pin_config = {
 
 
 
-enable_hsi = True                      
+enable_hsi = False                      
 
 
 # [LOCAL DISPLAY] *
@@ -39,16 +39,6 @@ show_local_output = False
 
 
 # [POTENTIAL TARGET DETECTION]
-ct2r_hue_lower_tolerance = 10
-ct2r_hue_upper_tolerance = 10
-ct2r_saturation_lower_tolerance = 10
-ct2r_blur_level = 25
-ct2r_minpolywidth = 70
-ct2r_minpolyht = 70
-ct2r_maxpolywidth = 120
-ct2r_maxpolyht = 240
-ct2r_min_hsv_value = 150
-
 default_camera = 0
 
 failed_tracking_frames_thresh = 200

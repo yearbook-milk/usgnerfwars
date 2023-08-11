@@ -1,15 +1,6 @@
 import cv2
 import numpy as np
 
-"""
-Tracker Module Interface:
-
-_init(frame, ROI, **kwargs)
-_update(frame, **kwargs) -> tuple [2] (success,bbox)
-
-
-* this is the 75% bboxversion of the KCF tracker
-"""
 
 the_tracker = None
 
