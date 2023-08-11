@@ -60,8 +60,8 @@ def updatePipeline():
     failed_tracks = 0
     print("-- updatePipeline: lock released automatically in order to update pipeline...")
     
-    # before we update the CV pipline we should also update cfg
 
+    # reloading all computer vision modules to get the freshest version
     cvmodules = {}
     for i in os.listdir():
         if i.endswith(".py"):
@@ -74,19 +74,28 @@ def updatePipeline():
         print(f"-- RELOADER: reloaded {cvmodules[i]}")
         
     global failed_tracks_thresh, rsfactor, compression
+    
+    # changing some global variables, such as the preprocessing resize factor
     failed_tracks_thresh = cfg.failed_tracking_frames_thresh
     rsfactor = cfg.image_resize_factor
     compression = cfg.network_image_compression
     
 
 
-
+    
     global inuse, filterdata, trackers_inuse
+    
+    # get a copy of the freshest version of the detector config data for our use 
+    # (we also pass this in every frame to tell the detectors what to filter out, i.e. every frame we will pass in a dict that says "only look for red and orange objects"
+    filterdata = eval(helpers.file_get_contents("detectorfilterdata.txt"), cvmodules)
+
+    # set which detector modules are in use and initialize them anew
     inuse = eval(helpers.file_get_contents("detectorpipeline.txt"), cvmodules)
     for i in inuse:
         print("-- Detector setup: "+str(i))
         i._init(cvmodules)
-    filterdata = eval(helpers.file_get_contents("detectorfilterdata.txt"), cvmodules)
+        
+    # set which trackers are in use 
     trackers_inuse = eval(helpers.file_get_contents("tracker.txt"), cvmodules)
     
     print(f"OK! Detection pipeline reconfigured. Using detectors {inuse} \n\n with input data {filterdata}. \n\n Tracker: {trackers_inuse}\n\n")
@@ -101,21 +110,38 @@ updatePipeline()
 
 
 # THIRD, SET UP LOCAL VARIABLES -----------
+
+# if this is true, only the biggest detection from all the detection algs will be shown, which is useful for testing
+# note that this doesn't apply to the auto redetection yet though
 only_draw_biggest_polygon = True
 
+# if this is SCAN, it will seek all potential targets
+# if this is LOCK, it will track a selected target
 lock = "SCAN"
+
+# this isn't used anymore
 the_tracker = None
+
+# keep track of the number of consecutive times the tracker has failed to see the target in frame, if its over the failed_tracking_frames_thresh then it will go back to SCAN mode
 failed_tracks = 0
+
+# store the last successful frame, last successful detections and last successful tracking polygons
+# these are used for the redetection logic (because it needs to know the last time tracking was successful and where that polygon was)
 last_successful_frame = None
 last_success_boxes = []
 last_successful_tracks = []
+
+# store information about movement for detecting if the tgt walked off frame or not
 is_moving = False
 vector_motion = (0,0)
 mag = 0
+
+# if this is "LEFT", it means the program thinks the target went to the left and off frame
 keep_going = "STOP"
 
+# initialize an array to store text in
+# (this is what gets serialized and sent over UDP)
 encoded_text     = []
-# (x,y,color,scale,content)
 
 # set up output windows
 #cv2.namedWindow("input")
@@ -155,7 +181,9 @@ if cfg.enable_networking:
 
     print(f"-- Using port {cfg.TCP_port}")
     print(f"-- {cfg.checkip_command} exit code: {ip}")
+    # wait for a connection (blocks until one arrives)
     net.initConnection()
+    # read what port the Java reconfig server is running on
     f = open("../http/.PORT")
     pn = int(f.read())
     f.close()
@@ -185,19 +213,22 @@ while latch:
     # -----------------------------------------------------------
 
     if (ret):
+        # preprocessing
         camera_input = cv2.resize(camera_input, (0,0), fx=rsfactor, fy=rsfactor)
         camera_input = helpers.increase_brightness(camera_input, value=10)
-        # get polygons back out of the detection method if we are scanning
-        polygons = []
-        for i in inuse:
-            polygons += i._attempt_detection(camera_input, filterdata)[0]
+        
+
         # SCAN FOR CANDIDATES ------------------------------------------------------
         if (lock == "SCAN"):
-
+            # use all of the selected detection algs and store ALL detections, from ALL algs, in an array
+            polygons = []
+            for i in inuse:
+                polygons += i._attempt_detection(camera_input, filterdata)[0]
+                
             if not only_draw_biggest_polygon:
                 indice = 0
                 polycopy = {}
-                # we sort the polygons by top left coordinate so that way we the boxes dont switch numbers constantly
+                # we sort the polygons by top left coordinate so that way we the detections all have an index based on position and not detection order
                 for i in polygons:
                     polycopy[ i[1] + i[0] ] = i
 
@@ -209,7 +240,7 @@ while latch:
                 for i in myKeys:
                     polygons.append(polycopy[i])
 
-                
+                # draw polygons and add text
                 for i in polygons:
                     x, y, w, h = i
                     cv2.rectangle(camera_input, (x,y), (x+w,y+h), (255, 255, 0), 2)
@@ -226,8 +257,8 @@ while latch:
                     else:
                         encoded_text.append( [x, y, (255,255,0), 0.50, "detection#"+str(indice)] )
                     indice += 1
-                    # if all polygons that were able to be produced are to be drawn, draw in cyan
             else:
+                # find and use only the largest polygon, because that setting was enabled
                 largestPolygon = (-1, -1, -1, -1)
                 for i in polygons:
                     x, y, w, h = i
@@ -235,6 +266,8 @@ while latch:
                         largestPolygon = (x, y, w, h)
                 x, y, w, h = largestPolygon
                 polygons = [largestPolygon]
+                
+                # draw detection
                 cv2.rectangle(camera_input, (x,y), (x+w,y+h), (255, 255, 0), 2)
                 if not cfg.enable_networking or cfg.show_local_output:
                     cv2.putText(
@@ -258,7 +291,7 @@ while latch:
         elif (lock == "LOCK"):
             if (the_tracker == None):
                 lock == "SCAN"
-            
+          
             successes = 0
             x = 0
             y = 0
@@ -280,17 +313,23 @@ while latch:
                 h = int(h / successes)
                 box = (x, y, w, h)
                 last_success_box = box
+                
+                # tell the object permeance logic that the person is in frame now and that we dont have to assume the person's position anymore
                 keep_going = "STOP"
+                
+                # draw 
                 cv2.rectangle(camera_input, box, (0, 255, 255), 2)
                 camera_input = helpers.line(camera_input, "X=", int(box[0] + 0.5 * box[2]), (0,255,255))
                 camera_input = helpers.line(camera_input, "Y=", int(box[1] + 0.5 * box[3]), (0,255,255))
                 centerpoint = (int(box[1] + 0.5 * box[3]), int(box[0] + 0.5 * box[2]))
-                # if the polygon is being tracked, draw in yellow
+
+                # set the consecutive failed tracking frames counter to 0
                 failed_tracks = 0
+                
+                
                 # now that we have a center point, we should calculate how much to turn the servo
                 screen_center = ( int(camera_input.shape[0] * 0.5)+10, int(camera_input.shape[1] * 0.5) )
                 
-                # yaw and pitch check
                 try:
                     dy = abs(screen_center[0] - centerpoint[0])
                     dx = abs(screen_center[1] - centerpoint[1])
@@ -305,7 +344,7 @@ while latch:
 
                         if centerpoint[0] > screen_center[0]:
                             print(f"target below the centerline {dy}px")
-                            if cfg.centering_method == "STEP":
+                            if cfg.centering_method == "STEP":        # STEP mode is "if its a little to the left, turn X deg, and if its a lot to the left, turn it Y deg"
                                 if dy > cfg.pitch_high_step[0]:
                                     pitch -= cfg.pitch_high_step[1]
                                     print("high step down")
@@ -315,8 +354,8 @@ while latch:
                                 else:
                                     pitch -= cfg.pitch_low_step[1]
                                     print("low step down")
-                            elif cfg.centering_method == "RATIO":
-                                pitch -= dry
+                            elif cfg.centering_method == "RATIO":    # RATIO mode has the same logic, but instead of only having three possible turning values, the turning value is 
+                                pitch -= dry                         # determined using math that takes in the  distance to center line and the camera's the range of vision (supposedly)
                                 print("turning down", dry)
                                 
                             
@@ -372,19 +411,20 @@ while latch:
                                 print("turning left", drx)
                                 
 
-                        
+                    # prevent overpitching or overyawing 
                     if (yaw > cfg.pin_config['yaw_limits'][1]): yaw = cfg.pin_config['yaw_limits'][1]
                     if (yaw < cfg.pin_config['yaw_limits'][0]): yaw = cfg.pin_config['yaw_limits'][0]
                     if (pitch > cfg.pin_config['pitch_limits'][1]): pitch = cfg.pin_config['pitch_limits'][1]
                     if (pitch < cfg.pin_config['pitch_limits'][0]): pitch = cfg.pin_config['pitch_limits'][0]
 
 
-
+                    # act on the servo
                     if cfg.enable_hsi:        
                         sri.pitch(pitch)
                         sri.yaw(yaw)
                         pass
                     
+                    # draw the yellow and purple box
                     camera_input = helpers.line(camera_input, "X=", int(camera_input.shape[1] * 0.5), (255,0,255))
                     camera_input = helpers.line(camera_input, "Y=", int(camera_input.shape[0] * 0.5), (255,0,255))
                     camera_input = cv2.rectangle(camera_input, (screen_center[1] - cfg.centering_tolerance, screen_center[0] - cfg.centering_tolerance), (screen_center[1] + cfg.centering_tolerance, screen_center[0] + cfg.centering_tolerance), (255,0,255), 2 )
@@ -415,7 +455,7 @@ while latch:
                 
                 except ZeroDivisionError:
                     print("ZeroDivisionError while attempting to move target to center using servos...")
-        # IF SUCCESSFUL TRACK  --------------------------------------------
+        # -------------------------------------------------------
             
             
             
@@ -424,10 +464,12 @@ while latch:
             # IF BAD TRACK ----------------------------------------------------
             elif (not success):
                 failed_tracks += 1
+                # add one to the consecutive failed tracking frames counter
 
            
             
-             # if the failed tracking frame was on one of the edges, we can turn the thing before declaring that we have lost the lock and starting 3R
+             # if the failed tracking frame was on one of the edges, or the target was moving quickly towards an edge, we can assume that the target moved off frame and
+             # thus turn in that direction before declaring that the target is gone for good
             if (cfg.yaw_exit_frame_detection) and (is_moving) and (keep_going == "STOP"):   # we only start doing this if we know for a fact that the subject is moving around
                 if (cfg.yaw_exit_frame_detect_by_vector and vector_motion[1] < -15) or (cfg.yaw_exit_frame_detect_by_position and centerpoint[1] in range(0, 50)):
                    print("The target departed to the left of the frame")
@@ -451,7 +493,7 @@ while latch:
                        print("Correcting by turning to the right...")
                    if cfg.enable_hsi: sri.yaw(yaw)
 
-
+            # if the program still assumes that the person is in that direction off frame, it will keep turning 
             if (keep_going != "STOP"):
                 if keep_going == "LEFT":
                    print("Continuing to turn to the left...")
@@ -495,7 +537,7 @@ while latch:
                    if cfg.enable_hsi: sri.pitch(pitch)
 	      """
 
-            # if the failed track frames have exceeded the unlock limit
+            # if the program has not seen the target and tracked it in a long time
             if (failed_tracks >= failed_tracks_thresh):
                 the_tracker = None
                 lock = "SCAN"
@@ -504,7 +546,7 @@ while latch:
                 # 3R ATTEMPT -----------------------------------------------------------
             if (failed_tracks >= cfg.attempt_drr_after and cfg.attempt_detect_resolve_relock):
                 print("Attempting a redetection after a failed lock...")
-                # REDETECT (this is mostly a copy of the code located in the SCAN portion, minus the portions for sorting and LPO
+                # redetect potential targets in frame
                 
                 polygons = []
                 for i in inuse:
@@ -514,7 +556,7 @@ while latch:
                   
                   
                   
-                # RESOLUTION (this will pick out the detection that is closest to the thing, and only within the bounding box
+                # sort through detections seeing which one could be the original target, and declare a single answer by the end
                 the_bbox = None
                 
                 acceptable = []
@@ -546,6 +588,9 @@ while latch:
                         else:
                             cv2.rectangle(camera_input, i, (0, 0, 100), 2)
                     #print(f"Of {len(acceptable)} neighboring detections, {len(acceptable_2)} of approximately correct size profile will be considered,")    
+                    
+                    
+                    # choose a final answer by "which one is closest in (size || position) to the original?"
                     if len(acceptable_2) > 0:
                         final = {}
                         for i in acceptable_2:
@@ -561,7 +606,7 @@ while latch:
 
         
                 
-                # RELOCKING (indented this way because it should only run when we get a final answer - if there are no detections for instance, we should do nothing)
+                # RELOCKING (indented this way because it should only run when we get a final answer for which box is the original target  - if there are no detections for instance, we should do nothing)
                         try:
                             for i in trackers_inuse:
                                 i._init(last_successful_frame, final)
@@ -588,6 +633,7 @@ while latch:
         if (only_draw_biggest_polygon): polset = "LPONLY"
         else: polset = "ALL"
 
+        # draw text
         if not cfg.enable_networking:
             cv2.putText(
                 camera_input,
@@ -652,6 +698,7 @@ while latch:
             cv2.imshow("output",camera_input)
         if cfg.enable_networking:
             old_shape = camera_input.shape
+            # compress image
             camera_input = cv2.resize(camera_input, (0,0), fx=compression, fy=compression) 
             d = pickle.dumps(camera_input)
             # encode polygons and text
@@ -662,7 +709,7 @@ while latch:
     # ----------------------------------------------
 
 
-    # WIRELESS NETWORKING/CMD LOGIC (control packets that are sent over the TCP signaling channel) ----------
+    # WIRELESS NETWORKING/CMD LOGIC (listen for control packets that are sent over the TCP signaling channel, or even the UDP channel) ----------
     if cfg.enable_networking:
         command = net.readFrom("TCP", net.TCP_CONNECTION, 2048)
         if not command:
@@ -738,6 +785,7 @@ while latch:
                         reason = 1
                     elif command[0] == "dtoggle" and cfg.enable_hsi:
                         if command[1] == "fire":
+                            # fix this to make it async
                             if not sri.rev: 
                                 def fireseq():
                                    if not sri.rev: sri.toggleRev()
