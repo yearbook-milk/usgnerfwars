@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import helpers
 
 """
 Detector Module Interface:
@@ -28,51 +29,56 @@ maxPolygonHeight = 0
 
 # hs is for lower hue leniency, ha is for upper hue leniency, ss is for desaturation tolerance, blur is for how
 # much blur to apply to remove noise (more blur = less noise but also worse detections far away
-def _init(lhs = hs, lha = ha, lss = ss, lminval = minval, lblur = blur, lminPolygonWidth = minPolygonWidth, lminPolygonHeight = minPolygonHeight, lmaxPolygonWidth = maxPolygonWidth, lmaxPolygonHeight = maxPolygonHeight):
+def _init(other_modules):
     global colors, available_colors, hs, ha, ss, blur, minPolygonHeight, minPolygonWidth, maxPolygonWidth, maxPolygonHeight
-    hs = lhs
-    ha = lha
-    ss = lss
-    minval = lminval
-    blur = lblur
-    minPolygonWidth = lminPolygonWidth
-    minPolygonHeight = lminPolygonHeight
-    maxPolygonWidth = lmaxPolygonWidth
-    maxPolygonHeight = lmaxPolygonHeight
     # helper constants i got from https://cppsecrets.com/users/252310097107115104971051159911111110864103109971051084699111109/DETECTION-OF-COLOR-OF-AN-IMAGE-USING-OpenCV.php
+    f = eval(helpers.file_get_contents("detectorfilterdata.txt"), other_modules)
+    hs = f["color_detect"]["other_parameters"]["lower_hue_tolerance"]
+    ha = f["color_detect"]["other_parameters"]["upper_hue_tolerance"]
+    ss = f["color_detect"]["other_parameters"]["min_hsv_saturation"]
+    minval = f["color_detect"]["other_parameters"]["min_hsv_value"]
+    blur = f["color_detect"]["other_parameters"]["blur_level"]
+    minPolygonWidth = f["color_detect"]["other_parameters"]["minPolygonWidth"]
+    minPolygonHeight = f["color_detect"]["other_parameters"]["minPolygonHeight"]
+    maxPolygonWidth = f["color_detect"]["other_parameters"]["maxPolygonWidth"]
+    maxPolygonHeight = f["color_detect"]["other_parameters"]["maxPolygonHeight"]
+
     """colors["lower_black"] = [0,0,0] 
     colors["upper_black"] = [50,50,100] 
     colors["lower_white"] = [0,0,0] 
     colors["upper_white"] = [0,0,255]"""
-    colors["lower_red"] =        [0,150-ss,minval] 
+    colors["lower_red"] =        [0,ss,minval] 
     colors["upper_red"] =        [10+ha,255,255] 
-    colors["lower_green"] =      [45-hs,150-ss,minval] 
+    colors["lower_green"] =      [45-hs,ss,minval] 
     colors["upper_green"] =      [65+ha,255,255] 
-    colors["lower_yellow"] =     [25-hs,150-ss,minval] 
+    colors["lower_yellow"] =     [25-hs,ss,minval] 
     colors["upper_yellow"] =     [35+ha,255,255] 
-    colors["lower_light_blue"] = [95-hs,150-ss,minval] 
+    colors["lower_light_blue"] = [95-hs,ss,minval] 
     colors["upper_light_blue"] = [110+ha,255,255] 
-    colors["lower_orange"] =     [15-hs,150-ss,minval] 
+    colors["lower_orange"] =     [15-hs,ss,minval] 
     colors["upper_orange"] =     [25+ha,255,255] 
-    colors["lower_dark_pink"] =  [160-hs,150-ss,minval] 
+    colors["lower_dark_pink"] =  [160-hs,ss,minval] 
     colors["upper_dark_pink"] =  [170+ha,255,255] 
-    colors["lower_pink"] =       [145-hs,150-ss,minval]
+    colors["lower_pink"] =       [145-hs,ss,minval]
     colors["upper_pink"] =       [155+ha,255,255] 
-    colors["lower_cyan"] =       [85-hs,150-ss,minval] 
+    colors["lower_cyan"] =       [85-hs,ss,minval] 
     colors["upper_cyan"] =       [95+ha,255,255] 
-    colors["lower_dark_blue"] =  [115-hs,150-ss,minval] 
+    colors["lower_dark_blue"] =  [115-hs,ss,minval] 
     colors["upper_dark_blue"] =  [125+ha,255,255]
 
 def colorMasksGenerator(names):
-    global available_colors
-    output = []
-    for i in names.split(" "):
-        if i in available_colors: output.append({"colormask_upper": colors[f"upper_{i}"], "colormask_lower": colors[f"lower_{i}"]})
-    return output
-
+    try:
+        global available_colors
+        output = []
+        for i in names.split(" "):
+            if i in available_colors: output.append({"colormask_upper": colors[f"upper_{i}"], "colormask_lower": colors[f"lower_{i}"]})
+        return output
+    except:
+        print("Error on generating colormasks! Did you run _init() at least once?")
+        return []
 def _attempt_detection(image, filterdata):
     try:
-        colormasks = filterdata["colormasks"]
+        colormasks = filterdata["color_detect"]["colormasks"]
     except Exception:
         print("Invalid filterdata given to ct2r.py!")
         return image

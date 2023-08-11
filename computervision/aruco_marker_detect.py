@@ -15,7 +15,8 @@ detector = None
 dictionary = None
 parameters = None
 
-def _init(dicti = cv2.aruco.DICT_4X4_250):
+def _init(other_modules):
+    dicti = cv2.aruco.DICT_4X4_250
     global detector, dictionary, parameters
     dictionary = cv2.aruco.getPredefinedDictionary(dicti)
     parameters =  cv2.aruco.DetectorParameters()
