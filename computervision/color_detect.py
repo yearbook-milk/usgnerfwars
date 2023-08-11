@@ -27,6 +27,7 @@ minPolygonHeight = 0
 maxPolygonWidth = 0
 maxPolygonHeight = 0
 
+
 # hs is for lower hue leniency, ha is for upper hue leniency, ss is for desaturation tolerance, blur is for how
 # much blur to apply to remove noise (more blur = less noise but also worse detections far away
 def _init(other_modules):

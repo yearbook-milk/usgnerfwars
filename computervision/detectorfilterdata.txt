@@ -13,4 +13,9 @@
             "maxPolygonHeight": 2400,
         },
     }
+
+    "aruco_marker_detect": {
+        
+    }
+
 }

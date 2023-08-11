@@ -11,7 +11,7 @@ _update(frame, **kwargs) -> tuple [2] (success,bbox)
 """
 
 aruco_id = 45
-aruco_detector = None
+mods = None
 
 def _init(frame, ROI, dicti = cv2.aruco.DICT_4X4_250):
     global aruco_id, aruco_detector
