@@ -1,5 +1,7 @@
 import socket, time
 
+# global variables that can be accessed from outside this file
+# (sometimes, you have to pass in the active TCP_CONX or UDP_SOCKET to send a file, which is why they have to be public)
 signaling_port = 10007
 data_channel_port = 10009
 TCP_SOCKET = None
@@ -57,13 +59,12 @@ def initConnection():
         print("[net] Closed UDP socket.")
 
     TCP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # the program will block until someone else connects to the thing
     TCP_SOCKET.setblocking(0)
-    # get a better name
-
     TCP_SOCKET.bind(("0.0.0.0", signaling_port))
     print(f"[net] Listening on TCP port {signaling_port}")
     TCP_SOCKET.listen()
+    
+    # the program will block until someone else connects to the server
     while True:
         try:
             conn, addr = TCP_SOCKET.accept()
@@ -74,7 +75,7 @@ def initConnection():
 
     print(f"[net] Remote peer has connected: {addr}")
 
-    # now that everything is set up, we can set global objects that can be read from
+    # now that everything is set up, we can set global objects that can be read from outside this file
     TCP_CONNECTION = conn
     TCP_CONNECTION.setblocking(0)
     TCP_CONNECTION.send(bytes(str(data_channel_port), "ascii"))
