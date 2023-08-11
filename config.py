@@ -27,6 +27,9 @@ pin_config = {
 
 "yaw_limits": (-90, 90),
 "pitch_limits": (-30, 30),
+
+"min_pulse_length": 500,
+"max_pulse_length": 2500,
 }
 
 

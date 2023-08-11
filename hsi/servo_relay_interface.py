@@ -18,11 +18,16 @@ config = {
 
 "yaw_limits": (0, 0),
 "pitch_limits": (0, 0),
+
+"min_pulse_length": 500,
+"max_pulse_length": 2500,
 }
 
+# these store whether or not the program has turned on or off the firing relays
 rev = False
 fire = False
 
+# this method is no longer in use 
 def legacy_angle_to_percent(angle):
     assert ((angle > 180 or angle < 0) == False)
     start = 4
@@ -33,7 +38,7 @@ def legacy_angle_to_percent(angle):
 
 def angle_to_pulse_width(angle):
     #print(500 + ( (2500-500) * float(angle) / 180) )  
-    return 500 + ( (2500-500) * float(angle) / 180)
+    return config["min_pulse_length"] + ( (config["max_pulse_length"]-config["min_pulse_length"]) * float(angle) / 180)
 
 def centerAllAxes():
     global pwmL, pwmR, config, pwmP, pwm
@@ -80,7 +85,7 @@ def __initialize():
 
     pwm = pigpio.pi()
     
-    
+    # set all the pins up to be outputs so they can be PWMd
     for i in config["pinsToSet"].split(" "):
         pwm.set_mode(config[i], pigpio.OUTPUT)
         pwm.set_PWM_frequency( config[i], frequence )
@@ -92,7 +97,7 @@ def __initialize():
 def __shutdown():
     global pwmL, pwmR, config, pwmP, pwm
     global config
-    #Close GPIO & cleanup
+    #Close GPIO & cleanup (also makes sure to cut servo power)
     for i in config["pinsToSet"].split(" "):
         pwm.set_PWM_dutycycle( config[i], 0 )
         pwm.write(config[i], pigpio.LOW)
