@@ -16,8 +16,8 @@ config = {
 "pulse_freq": 50,
 "pinsToSet": "leftPin rightPin yawPin",
 
-"yaw_limits": (-90, 90),
-"pitch_limits": (-35, 90),
+"yaw_limits": (0, 0),
+"pitch_limits": (0, 0),
 }
 
 rev = False
