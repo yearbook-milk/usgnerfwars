@@ -24,16 +24,20 @@ public class ReadHandler implements HttpHandler {
 		File f;
 
       try {
+		// send this because the HTML client that presents a GUI to read this stuff isnt
+		// on the same host as this http server
 		t.getResponseHeaders().set("Access-Control-Allow-Origin", "*");  
 		  
+		// print dbg info
         System.out.println(t.getRequestMethod() + " " + t.getRequestURI());
         System.out.println(t.getRequestHeaders());
-        // For this, we just process the URL and return the contents of the appropriate file,
-        // assuming that this file is on the list that is allowed to be exposed.
 
+		// parse URL
         String[] components = t.getRequestURI().toString().split("/");
         String[] acceptable = {"detectorfilterdata.txt", "detectorpipeline.txt", "tracker.txt", "doc.txt", ",config.py"};
         boolean pass = false;
+		
+		// check that the file can be read from
         for (String filename : acceptable) {
           if (filename.equals(components[2])) {
             pass = true; 
@@ -42,12 +46,14 @@ public class ReadHandler implements HttpHandler {
         if (pass == false) {
           Helper.reply_over_HTTP(t, 403, "403: Access denied");
         } else {
-          // Send the reply using roHTTP
+		  // if the user is allowed to read from the requested file...
+          // open it 
 		  if (components[2].substring(0,1).equals(",")) {
 			f = new File("../" + components[2].substring(1));
 		  } else {
 			f = new File("../computervision/" + components[2]);
 		  }
+		  // read it
           Scanner fr = new Scanner(f);
           String output = "";
           while (fr.hasNextLine()) {
@@ -55,6 +61,7 @@ public class ReadHandler implements HttpHandler {
 			output += "\n";
           }
           fr.close();
+		  // put it in the HTTP response body and send it
           Helper.reply_over_HTTP(t, 200, output);
         }
       } catch (Exception e) {

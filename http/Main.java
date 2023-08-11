@@ -22,6 +22,7 @@ public class Main {
   // for the HTTP server code
   public static void main(String[] args) throws Exception {
 	
+	  // start the server on the port in the .PORT file in this dir
 	  File f = new File(".PORT");
 	  Scanner fr = new Scanner(f);
 	  String output = "";
