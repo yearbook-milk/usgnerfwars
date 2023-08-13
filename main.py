@@ -24,7 +24,7 @@ import helpers
 
 print("-- Imports complete!")
 
-
+# STARTUP SEQUENCE
 
 
 # FIRST, set up access to webcam and network -------------
@@ -260,6 +260,7 @@ while latch:
             else:
                 # find and use only the largest polygon, because that setting was enabled
                 largestPolygon = (-1, -1, -1, -1)
+                print(polygons)
                 for i in polygons:
                     x, y, w, h = i
                     if (w > largestPolygon[2] and h > largestPolygon[3]):
@@ -696,6 +697,7 @@ while latch:
         # either display the image or prepare it for transmission over socket
         if not cfg.enable_networking or cfg.show_local_output:
             cv2.imshow("output",camera_input)
+
         if cfg.enable_networking:
             old_shape = camera_input.shape
             # compress image
@@ -706,6 +708,7 @@ while latch:
             shape = pickle.dumps(old_shape)
             # transmit over socket
             net.sendTo("UDP", net.UDP_SOCKET, d + b"::::" + text + b"::::" + shape, net.TCP_REMOTE_PEER[0])
+            
     # ----------------------------------------------
 
 
@@ -786,29 +789,12 @@ while latch:
                     elif command[0] == "dtoggle" and cfg.enable_hsi:
                         if command[1] == "fire":
                             # fix this to make it async
-                            if not sri.rev: 
-                                def fireseq():
-                                   if not sri.rev: sri.toggleRev()
-                                   sleep(1)
-                                   if not sri.fire: sri.toggleFire()
-                                   sleep(1.5)
-                                   if sri.rev: sri.toggleRev()
-                                   if sri.fire: sri.toggleFire()
-                                proc = Process(target=fireseq)
-                                proc.start()
-                                proc.join()
-                            elif sri.rev: sri.toggleFire()
+                            sri.toggleFire()
                             print("remote cmd: dtoggle fire")
                         elif command[1] == "rev":
                             sri.toggleRev()
                             print("remote cmd: dtoggle rev")
-                            def shutOff():
-                                sleep(cfg.max_seconds_rev)
-                                if sri.rev: sri.toggleRev()
-                                if sri.fire: sri.toggleFire()
-                            proc = Process(target=shutOff)
-                            proc.start()
-                            proc.join()
+
 
                         
                 
@@ -846,8 +832,5 @@ if cfg.enable_hsi:
 if cfg.enable_networking:
     net.TCP_SOCKET.close()
     net.UDP_SOCKET.close()
-if reason == 1:
-    os.chdir("..")
-    os.system(cfg.restart_command)
-    
+
     

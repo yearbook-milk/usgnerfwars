@@ -1,3 +1,4 @@
+if True:
 # * = this setting is only applied on start up, and changing it/applying changes while main is running will have no fx
 
 # [NETWORKING] *

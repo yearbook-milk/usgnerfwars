@@ -12,10 +12,14 @@
             "maxPolygonWidth": 1200,
             "maxPolygonHeight": 2400,
         },
-    }
+    },
 
     "aruco_marker_detect": {
         
-    }
+    },
+
+    "random_detect": {
+        "generations": 15
+    },
 
 }
