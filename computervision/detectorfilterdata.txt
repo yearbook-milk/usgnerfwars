@@ -2,9 +2,9 @@
     "color_detect": {
         "colormasks": color_detect.colorMasksGenerator("red orange yellow"),
         "other_parameters": {
-            "lower_hue_tolerance": 10,
-            "upper_hue_tolerance": 10,
-            "min_hsv_saturation": 10,
+            "lower_hue_tolerance": 15,
+            "upper_hue_tolerance": 15,
+            "min_hsv_saturation": 35,
             "min_hsv_value": 150,
             "blur_level": 25,
             "minPolygonWidth": 70,
