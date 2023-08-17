@@ -69,9 +69,12 @@ def _init(other_modules):
     colors["upper_cyan"] =       [95+ha,255,255] 
     colors["lower_dark_blue"] =  [115-hs,ss,minval] 
     colors["upper_dark_blue"] =  [125+ha,255,255]
+    print(f"[color detector] On _init(), colors: {colors}")
 
 
 def colorMasksGenerator(names):
+    global colors
+    print(f"[color detector] Generating colormasks with data {colors}")
     try:
         global available_colors
         output = []
@@ -79,15 +82,16 @@ def colorMasksGenerator(names):
             if i in available_colors: output.append({"colormask_upper": colors[f"upper_{i}"], "colormask_lower": colors[f"lower_{i}"]})
         return output
     except:
-        print("Error on generating colormasks! Did you run _init() at least once?")
+        print("[color detector] Error on generating colormasks! Did you run _init() at least once?")
         return []
         
         
 def _attempt_detection(image, filterdata):
+    global colors
     try:
         colormasks = filterdata["color_detect"]["colormasks"]
     except Exception:
-        print("Invalid filterdata given to ct2r.py!")
+        print("[color detector] Invalid filterdata given to ct2r.py!")
         return image
     
     height, width, _ = image.shape
@@ -96,7 +100,7 @@ def _attempt_detection(image, filterdata):
     
     # FIRST STEP: APPLY COLOR MASKS
     for i in colormasks:
-        global colors, available_colors, blur, minPolygonHeight, minPolygonWidth
+        global available_colors, blur, minPolygonHeight, minPolygonWidth
         
         image2 = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         lower_bound = np.array(i["colormask_lower"])

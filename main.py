@@ -14,7 +14,7 @@ sys.path.append(os.path.abspath("net/server"))
 os.chdir(os.path.abspath("computervision"))
 
 
-print(f"-- PATH variable: {sys.path}")
+print(f"[startup] PATH variable: {sys.path}")
 
 
 
@@ -22,7 +22,7 @@ import config                        as cfg
 import helpers
 
 
-print("-- Imports complete!")
+print("[startup] Hard imports complete!")
 
 # STARTUP SEQUENCE
 
@@ -32,14 +32,14 @@ device = cfg.default_camera
 latch = True
 polygons = []
 
-if device == None: device = int(input("--Which device (enter an int)? "))
+if device == None: device = int(input("[startup] Which device (enter an int)? "))
 
 cap = cv2.VideoCapture(device)
 if not cap.isOpened():
-    print("-- Webcam entry point failed to initialize!")
+    print("[startup] Webcam entry point failed to initialize!")
     exit(-1)
 else:
-    print("-- Webcam OK!")
+    print("[startup] Webcam OK!")
 # --------------------------------------------
 
 
@@ -53,25 +53,27 @@ trackers_inuse = []
 filterdata = {}
 
 def updatePipeline():
-    print("Starting a reload of the CV pipeline...")
+    print("[cv module reloader] Starting a reload of the CV pipeline...")
     global the_tracker, lock, failed_tracks, cvmodules
     the_tracker = None
     lock = "SCAN"
     failed_tracks = 0
-    print("-- updatePipeline: lock released automatically in order to update pipeline...")
+    print("[cv module reloader]: lock released automatically in order to update pipeline...")
     
 
     # reloading all computer vision modules to get the freshest version
+    # (NOTE THAT WE DO NOT RUN THIS IF WE ALREADY RAN IT ONCE AND CVMODULES HAS BEEN POPULATED)
     cvmodules = {}
-    for i in os.listdir():
-        if i.endswith(".py"):
-            cvmodules[i.split(".")[0]] = __import__(i.split(".")[0])
-    print("LOADER: Loaded these computer vision modules: " + str(cvmodules).replace(",","\n"))
+    if len(cvmodules) < 1:
+        for i in os.listdir():
+            if i.endswith(".py"):
+                cvmodules[i.split(".")[0]] = __import__(i.split(".")[0])
+        print(f"[cv module reloader]: Loaded these computer vision modules for the first time: " + str(cvmodules).replace(",","\n"))
 
 
     for i in cvmodules:
         importlib.reload(cvmodules[i])
-        print(f"-- RELOADER: reloaded {cvmodules[i]}")
+        print(f"[cv module reloader]: reloaded {cvmodules[i]}")
         
     global failed_tracks_thresh, rsfactor, compression
     
@@ -85,20 +87,23 @@ def updatePipeline():
     
     global inuse, filterdata, trackers_inuse
     
-    # get a copy of the freshest version of the detector config data for our use 
-    # (we also pass this in every frame to tell the detectors what to filter out, i.e. every frame we will pass in a dict that says "only look for red and orange objects"
-    filterdata = eval(helpers.file_get_contents("detectorfilterdata.txt"), cvmodules)
-
     # set which detector modules are in use and initialize them anew
     inuse = eval(helpers.file_get_contents("detectorpipeline.txt"), cvmodules)
     for i in inuse:
-        print("-- Detector setup: "+str(i))
+        print("[cv module reloader] Detector initialize: "+str(i))
         i._init(cvmodules)
+        
+    # get a copy of the freshest version of the detector config data for our use 
+    # (we also pass this in every frame to tell the detectors what to filter out, i.e. every frame we will pass in a dict that says "only look for red and orange objects")
+    # note that we should _init() before we load filterdata ( for instance, colorMasksGenerator doesn't work until we _init() )
+    filterdata = eval(helpers.file_get_contents("detectorfilterdata.txt"), cvmodules)
+    print(f"[cv module reloader] Saved a copy of the filter data: {filterdata}")
+
         
     # set which trackers are in use 
     trackers_inuse = eval(helpers.file_get_contents("tracker.txt"), cvmodules)
     
-    print(f"OK! Detection pipeline reconfigured. Using detectors {inuse} \n\n with input data {filterdata}. \n\n Tracker: {trackers_inuse}\n\n")
+    print(f"[cv module reloader] OK! Detection pipeline reconfigured. Using detectors {inuse} \n\n with input data {filterdata}. \n\n Tracker: {trackers_inuse}\n\n")
 
 updatePipeline()
 # ----------------------------------------
@@ -162,9 +167,9 @@ if cfg.enable_hsi:
     import servo_relay_interface         as sri
     sri.config = cfg.pin_config
     sri.__initialize()
-    print("-- Hardware-software interface set up!")
+    print("[hsi startup in main] Hardware-software interface set up!")
 else:
-    print("-- The hardware-software interface was not set up.")
+    print("[hsi startup in main] The hardware-software interface was not set up.")
 #------------------------------------------------------
 
 
@@ -175,21 +180,21 @@ else:
 if cfg.enable_networking:
     import remote                        as net
     net.setupParameters(cfg.TCP_port, cfg.UDP_port)
-    print("-- Networking interface configured. The remote must connect to this device in order to continue startup. Network adapter info:")
+    print("[networking startup in main] Networking interface configured. The remote must connect to this device in order to continue startup. Network adapter info:")
 
     ip = os.system(cfg.checkip_command)
 
-    print(f"-- Using port {cfg.TCP_port}")
-    print(f"-- {cfg.checkip_command} exit code: {ip}")
+    print(f"[networking startup in main] Using port {cfg.TCP_port}")
+    print(f"[networking startup in main] {cfg.checkip_command} exit code: {ip}")
     # wait for a connection (blocks until one arrives)
     net.initConnection()
     # read what port the Java reconfig server is running on
     f = open("../http/.PORT")
     pn = int(f.read())
     f.close()
-    print(f"-- CAS Config HTTP should be running on port #"+str(pn))
+    print(f"[networking startup in main] CAS Config HTTP should be running on port #"+str(pn))
 else:
-    print("-- Remote mode has been disabled. An output window will start on the local machine.")
+    print("[networking startup in main] Remote mode has been disabled. An output window will start on the local machine.")
 # --------------
 
 
@@ -200,7 +205,7 @@ import time
 time.sleep(3)
 if cfg.enable_networking: net.sendTo("TCP", net.TCP_CONNECTION, b"casconfig " + bytes(str(pn), "ascii"), net.TCP_REMOTE_PEER[0])
 
-print("OK to go!")
+print("[startup] OK to go!")
 while latch:
     
     # TAKE A CAMERA INPUT --------------------------------------
@@ -260,7 +265,6 @@ while latch:
             else:
                 # find and use only the largest polygon, because that setting was enabled
                 largestPolygon = (-1, -1, -1, -1)
-                print(polygons)
                 for i in polygons:
                     x, y, w, h = i
                     if (w > largestPolygon[2] and h > largestPolygon[3]):
@@ -344,69 +348,69 @@ while latch:
                     ):
 
                         if centerpoint[0] > screen_center[0]:
-                            print(f"target below the centerline {dy}px")
+                            print(f"[autofollow] target below the centerline {dy}px")
                             if cfg.centering_method == "STEP":        # STEP mode is "if its a little to the left, turn X deg, and if its a lot to the left, turn it Y deg"
                                 if dy > cfg.pitch_high_step[0]:
                                     pitch -= cfg.pitch_high_step[1]
-                                    print("high step down")
+                                    print("[autofollow] high step down")
                                 elif dy > cfg.pitch_mid_step[0]:
                                     pitch -= cfg.pitch_mid_step[1]
-                                    print("mid step down")
+                                    print("[autofollow] mid step down")
                                 else:
                                     pitch -= cfg.pitch_low_step[1]
-                                    print("low step down")
+                                    print("[autofollow] low step down")
                             elif cfg.centering_method == "RATIO":    # RATIO mode has the same logic, but instead of only having three possible turning values, the turning value is 
                                 pitch -= dry                         # determined using math that takes in the  distance to center line and the camera's the range of vision (supposedly)
-                                print("turning down", dry)
+                                print("[autofollow] turning down", dry)
                                 
                             
                         if centerpoint[0] < screen_center[0]:
-                            print(f"target is above the centerline {dy}px")
+                            print(f"[autofollow] target is above the centerline {dy}px")
                             if cfg.centering_method == "STEP":
                                 if dy > cfg.pitch_high_step[0]:
                                     pitch += cfg.yaw_high_step[1]
-                                    print("high step up")
+                                    print("[autofollow] high step up")
                                 elif dy > cfg.pitch_mid_step[0]:
                                     pitch += cfg.pitch_mid_step[1]
-                                    print("mid step up")
+                                    print("[autofollow] mid step up")
                                 else:
                                     pitch += cfg.yaw_low_step[1]
-                                    print("low step up")
+                                    print("[autofollow] low step up")
                             elif cfg.centering_method == "RATIO":
                                 pitch += dry
-                                print("turning up", dry)
+                                print("[autofollow] turning up", dry)
 
                     if ( \
                         True and centerpoint[1] not in range(screen_center[1] - cfg.centering_tolerance, screen_center[1] + cfg.centering_tolerance)  \
                     ):
                         if centerpoint[1] > screen_center[1]:
-                            print(f"target is to the right of centerline {dx}px")
+                            print(f"[autofollow] target is to the right of centerline {dx}px")
                             if cfg.centering_method == "STEP":
                                 if dx > cfg.yaw_high_step[0]:
                                     yaw += cfg.yaw_high_step[1]
-                                    print("high step right")
+                                    print("[autofollow] high step right")
                                 elif dx > cfg.yaw_mid_step[0]:
                                     yaw += cfg.yaw_mid_step[1]
-                                    print("mid step right")
+                                    print("[autofollow] mid step right")
                                 else:
                                     yaw += cfg.yaw_low_step[1]
-                                    print("low step right")
+                                    print("[autofollow] low step right")
                             elif cfg.centering_method == "RATIO":
                                 yaw += drx
-                                print("turning right",drx)
+                                print("[autofollow] turning right",drx)
                             
                         if centerpoint[1] < screen_center[1]:
-                            print(f"target is to the left of centerline {dx}px")
+                            print(f"[autofollow] target is to the left of centerline {dx}px")
                             if cfg.centering_method == "STEP":
                                 if dx > cfg.yaw_high_step[0]:
                                     yaw -= cfg.yaw_high_step[1]
-                                    print("high step left")
+                                    print("[autofollow] high step left")
                                 elif dx > cfg.yaw_mid_step[0]:
                                     yaw -= cfg.yaw_mid_step[1]
-                                    print("mid step left")
+                                    print("[autofollow] mid step left")
                                 else:
                                     yaw -= cfg.yaw_low_step[1]
-                                    print("low step left")
+                                    print("[autofollow] low step left")
                             elif cfg.centering_method == "RATIO":
                                 yaw -= drx
                                 print("turning left", drx)
@@ -454,8 +458,8 @@ while latch:
                     mag = round(((vector_motion[0] ** 2) + (vector_motion[1] ** 2)) ** 0.5, 2) 
                     is_moving = mag >= cfg.motion_vector_min_mvmt_mag
                 
-                except ZeroDivisionError:
-                    print("ZeroDivisionError while attempting to move target to center using servos...")
+                except Exception as e:
+                    print("[autofollow] Exception while attempting to move target to center using servos: {e}")
         # -------------------------------------------------------
             
             
@@ -473,31 +477,31 @@ while latch:
              # thus turn in that direction before declaring that the target is gone for good
             if (cfg.yaw_exit_frame_detection) and (is_moving) and (keep_going == "STOP"):   # we only start doing this if we know for a fact that the subject is moving around
                 if (cfg.yaw_exit_frame_detect_by_vector and vector_motion[1] < -15) or (cfg.yaw_exit_frame_detect_by_position and centerpoint[1] in range(0, 50)):
-                   print("The target departed to the left of the frame")
+                   print("[target departure detection] The target departed to the left of the frame")
                    yaw -= cfg.yaw_mid_step[1]
                    if (yaw < cfg.pin_config['yaw_limits'][0]): 
                        yaw = cfg.pin_config['yaw_limits'][0]
                    else: 
                        #failed_tracks -= 1
                        keep_going = "LEFT"
-                       print("Correcting by turning to the left...")
+                       print("[target departure detection] Correcting by turning to the left...")
                    if cfg.enable_hsi: sri.yaw(yaw)
                 elif (cfg.yaw_exit_frame_detect_by_vector and vector_motion[1] > 15) or \
                      (cfg.yaw_exit_frame_detect_by_position and centerpoint[1] in range(camera_input.shape[1] - 100, camera_input.shape[1])):
-                   print("The target departed to the right of the frame")
+                   print("[target departure detection] The target departed to the right of the frame")
                    yaw += cfg.yaw_mid_step[1]
                    if (yaw > cfg.pin_config['yaw_limits'][1]): 
                        yaw = cfg.pin_config['yaw_limits'][1]
                    else: 
                        #failed_tracks -= 1
                        keep_going = "RIGHT"
-                       print("Correcting by turning to the right...")
+                       print("[target departure detection] Correcting by turning to the right...")
                    if cfg.enable_hsi: sri.yaw(yaw)
 
             # if the program still assumes that the person is in that direction off frame, it will keep turning 
             if (keep_going != "STOP"):
                 if keep_going == "LEFT":
-                   print("Continuing to turn to the left...")
+                   print("[target departure detection] Continuing to turn to the left...")
                    yaw -= cfg.yaw_mid_step[1]
                    if (yaw < cfg.pin_config['yaw_limits'][0]): 
                        yaw = cfg.pin_config['yaw_limits'][0]
@@ -506,7 +510,7 @@ while latch:
                        keep_going = "LEFT"
                    if cfg.enable_hsi: sri.yaw(yaw)
                 elif keep_going  == "RIGHT":
-                   print("Continuing to turn to the right...")
+                   print("[target departure detection] Continuing to turn to the right...")
                    yaw += cfg.yaw_mid_step[1]
                    if (yaw > cfg.pin_config['yaw_limits'][1]): 
                        yaw = cfg.pin_config['yaw_limits'][1]
@@ -546,7 +550,7 @@ while latch:
 
                 # 3R ATTEMPT -----------------------------------------------------------
             if (failed_tracks >= cfg.attempt_drr_after and cfg.attempt_detect_resolve_relock):
-                print("Attempting a redetection after a failed lock...")
+                print("[auto 3R logic] Attempting a redetection after a failed lock...")
                 # redetect potential targets in frame
                 
                 polygons = []
@@ -601,7 +605,7 @@ while latch:
                             if cfg.drr_resolve_using == "SIZE":  final[abs((i[0] * i[1]) - (last_success_box[0] * last_success_box[1]))] = i
                         #print(f"Choosing from: {final}")
                         final = final[min(list(final.keys()))]
-                        print(f"Finally selected: {final}")
+                        print(f"[auto 3R logic] Finally selected: {final}")
                         cv2.rectangle(camera_input, final, (0, 200, 0), 2)
                         
 
@@ -611,15 +615,15 @@ while latch:
                         try:
                             for i in trackers_inuse:
                                 i._init(last_successful_frame, final)
-                                print("auto redetect-resolve-relock: Initialized a tracker "+str(i))
+                                print("[auto 3R logic] auto redetect-resolve-relock: Initialized a tracker "+str(i))
                             lock = "LOCK"
                             failed_tracks = 0
                             vector_motion = (0,0)
                             is_moving = False
                             keep_going = "STOP"
-                            print("auto redetect-resolve-relock: Locked on subject with ROI "+str(final))
+                            print("[auto 3R logic] auto redetect-resolve-relock: Locked on subject with ROI "+str(final))
                         except Exception as e:
-                            print("auto redetect-resolve-relock: Failed to lock onto ROI "+str(final)+": "+str(e))
+                            print("[auto 3R logic] auto redetect-resolve-relock: Failed to lock onto ROI "+str(final)+": "+str(e))
                 # 3R ATTEMPT -----------------------------------------------------------
 
         # -----------------------------------------------------------
@@ -748,37 +752,37 @@ while latch:
                 command = str(i).split(" ")
                 try:
                     if command[0] == "abspitch":
-                        print(f"remote cmd: pitch {command[1]}")
+                        print(f"[networking] remote cmd: pitch {command[1]}")
                         if cfg.enable_hsi: sri.pitch(float(command[1]))
                         pitch = float(command[1])
                     elif command[0] == "absyaw":
-                        print(f"remote cmd: yaw {command[1]}")
+                        print(f"[networking] remote cmd: yaw {command[1]}")
                         if cfg.enable_hsi: sri.yaw(float(command[1]))
                         yaw = float(command[1])
                     elif command[0] == "toggle_lpo":
-                        print(f"remote cmd: toggle_LPO {only_draw_biggest_polygon}->{not only_draw_biggest_polygon}")
+                        print(f"[networking] remote cmd: toggle_LPO {only_draw_biggest_polygon}->{not only_draw_biggest_polygon}")
                         only_draw_biggest_polygon = not only_draw_biggest_polygon
                     elif command[0] == "select":
                         kb = int(command[1])
                         try:
                             for i in trackers_inuse:
                                 i._init(last_successful_frame, polygons[kb])
-                                print("remote cmd: Initialized a tracker "+str(i))
+                                print("[networking] remote cmd: Initialized a tracker "+str(i))
                             lock = "LOCK"
                             failed_tracks = 0
                             vector_motion = (0,0)
                             is_moving = False
                             keep_going = "STOP"
-                            print("remote cmd: Locked on subject #"+str(kb)+" at the command of the remote.")
+                            print("[networking]  cmd: Locked on subject #"+str(kb)+" at the command of the remote.")
                         except Exception as e:
-                            print("remote cmd: Failed to lock onto subject #"+str(kb)+": "+str(e))
+                            print("[networking] remote cmd: Failed to lock onto subject #"+str(kb)+": "+str(e))
                     elif command[0] == "forget":
                         the_tracker = None
                         lock = "SCAN"
                         failed_tracks = 0
-                        print("remote cmd: Lock released by remote.")
+                        print("[networking] remote cmd: Lock released by remote.")
                     elif command[0] == "updatepipeline":
-                        print("remote cmd: Reloading the pipeline at the command of the remote.")
+                        print("[networking] remote cmd: Reloading the pipeline at the command of the remote.")
                         updatePipeline()
                     elif command[0] == "stop":
                         latch = False
@@ -790,18 +794,18 @@ while latch:
                         if command[1] == "fire":
                             # fix this to make it async
                             sri.toggleFire()
-                            print("remote cmd: dtoggle fire")
+                            print("[networking] remote cmd: dtoggle fire")
                         elif command[1] == "rev":
                             sri.toggleRev()
-                            print("remote cmd: dtoggle rev")
+                            print("[networking] remote cmd: dtoggle rev")
 
 
                         
                 
                 except (ValueError, KeyError, IndexError) as e:
-                    print(f"Invalid command! No action was taken: "+str(e))
+                    print(f"[networking] Invalid command! No action was taken: "+str(e))
                 except AssertionError as e:
-                    print("AssertionError! Command: "+str(e))
+                    print("[networking] AssertionError! Command: "+str(e))
 
 
             # clear the buffers, both the TCP signalling channel and the UDP channel
@@ -824,7 +828,7 @@ while latch:
 
 
 # release resources when done
-print("Gracefully shutting down...")
+print("[shutdown] Gracefully shutting down...")
 cv2.destroyAllWindows()
 cap.release()
 if cfg.enable_hsi:

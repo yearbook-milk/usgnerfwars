@@ -21,7 +21,7 @@ def _init(frame, ROI, dicti = cv2.aruco.DICT_4X4_250):
     # note down what ID the marker is
     if len(ids) > 0:
         aruco_id = ids[0][0]
-        print(f"Just locked onto an aruco marker with ID {ids[0][0]}")
+        print(f"[aruco tag detector] Just locked onto an aruco marker with ID {ids[0][0]}")
     
     
 def _update(frame):
