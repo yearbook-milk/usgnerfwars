@@ -23,3 +23,28 @@
     },
 
 }
+
+
+# these settings are loaded on start up and whenever someone calls for a "reload of the pipeline", "pipeline reconfiguration" or other such action.
+
+# for color_detect: 
+# * all these settings must be positive integers
+#
+# lower and upper hue tolerance determine how many HSV degrees the hue of a certain pixel may be to still be considered a certain color (for instance, if you crank this number way up, green objects may start showing up as blue).
+#    * the more the number the more lenient color_detect will be. if you're not detecting enough, make this (and other) settings more lenient, and if you're picking up too much, make the settings stricter
+#
+# min hsv saturation determines the min. HSV saturation value a certain pixel must be to be considered a valid target.
+#    * this is a min value, so the more the number the more strict color_detect will be about the saturation
+#
+# min hsv value does the same thing, but for value. the V in HSV is basically how bright or dark a pixel is.
+#    * this is a min value, so the more the number the more strict color_detect will be about the value.
+#
+# blur level determines the amount of guassian blur used to filter out false positives and noise. MUST BE ODD.
+#    * the higher the number, the more blur that will be used
+#
+# min/max polygon height/width determine the min and max sizes of targets, in pixels. this is to prevent, for instance, a green wall that takes up the whole frame from being detected. 
+#
+#
+#
+
+# random_detect is from a tutorial we wrote and doesn't have any impact on the other detectors
